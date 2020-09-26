@@ -1,18 +1,19 @@
-from part1.http_response import HttpResponse
+from part1 import http_response
 import socket
 
 
 class HttpHandler:
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock = None
 
-    def get(self, url: str, recursion_count: int = 0) -> HttpResponse:
+    def get(self, url: str, recursion_count: int = 0) -> http_response.HttpResponse:
         if recursion_count >= 10:
-            return HttpResponse(408, "Recursion limit of 10 exceeded", "")
+            return http_response.HttpResponse(408, "Recursion limit of 10 exceeded", "")
 
         url_arr = url.split("/")
         base = url_arr[2]
         addr = "/".join(url_arr[3:])
 
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((base, 80))
 
         request = "GET /" + addr + " HTTP/1.1\r\nHost:" + base + "\r\n\r\n"
@@ -32,24 +33,24 @@ class HttpHandler:
 
         if status_code == '301' or status_code == '302':
             new_url_line = self.get_header('Location:', lines)
-            if new_url_line is None or new_url_line.find(':') == -1:
-                return HttpHandler(400, "Redirection failed, Location header not found")
-            new_url = new_url_line.split(':')[1]
+            if new_url_line is None or new_url_line.find(' ') == -1:
+                return http_response.HttpResponse(400, "Redirection failed, Location header not found")
+            new_url = new_url_line.split(' ')[1]
             return self.get(new_url, recursion_count=recursion_count + 1)
 
         content_type_line = self.get_header("Content-Type:", lines)
 
         if content_type_line is not None:
             if content_type_line is None or content_type_line.find(':') == -1:
-                return HttpHandler(400, "Content-Type header not found")
+                return http_response.HttpResponse(400, "Content-Type header not found")
             content_type = content_type_line.split(' ')[1]
             if content_type != 'text/html;':
-                return HttpResponse(400, "Content type is not text/html")
+                return http_response.HttpResponse(400, "Content type is not text/html")
         else:
-            return HttpResponse(400, "Content type is not text/html")
+            return http_response.HttpResponse(400, "Content type is not text/html")
 
         body = self.get_body(lines)
-        return HttpResponse(status_code, reason_message, body)
+        return http_response.HttpResponse(status_code, reason_message, body)
 
     @staticmethod
     def get_header(header_name: str, lines: list) -> str:
@@ -68,3 +69,7 @@ class HttpHandler:
             if line == '':
                 body_found = True
         return body
+
+
+if __name__ == "__main__":
+    pass

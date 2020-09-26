@@ -10,3 +10,7 @@ class HttpResponse:
         self.reason_message = reason_message
         self.body = body
         self.headers = headers
+
+
+if __name__ == "__main__":
+    pass
