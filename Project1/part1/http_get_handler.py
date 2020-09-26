@@ -13,7 +13,7 @@ class HttpHandler:
 
         self.sock.connect(("insecure.stevetarzia.com", 80))
 
-        request = "GET /basic.html HTTP/1.1\nHost: insecure.stevetarzia.com"
-        self.sock.send(request.encode())
+        request = "GET /basic.html HTTP/1.1\r\nHost:insecure.stevetarzia.com\r\n\r\n"
+        self.sock.sendall(request.encode())
         print(repr(self.sock.recv(4096)))
         # connection.sendall(data={})
