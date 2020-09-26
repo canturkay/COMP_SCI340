@@ -47,7 +47,7 @@ class HttpHandler:
         else:
             return HttpResponse(400, "Content type is not text/html")
 
-        
+
 
     @staticmethod
     def get_header(header_name: str, lines: list) -> str:
