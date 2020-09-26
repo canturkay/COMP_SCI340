@@ -12,7 +12,7 @@ def main(argv: list):
         wrong_format()
 
     http_handler = HttpHandler()
-    http_handler.get(url)
+    response = http_handler.get(url)
 
 
 def wrong_format():

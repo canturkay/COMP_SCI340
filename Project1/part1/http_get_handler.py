@@ -9,18 +9,11 @@ class HttpHandler:
         if recursion_count >= 10:
             return HttpResponse(408, "Recursion limit of 10 exceeded", "")
 
+        print(url)
+
         self.sock.connect(("insecure.stevetarzia.com", 80))
 
-        request = "GET / HTTP/1.1\r\nHost:%s\r\n\r\n" % url
+        request = "GET /basic.html HTTP/1.1\nHost:" + url
         self.sock.send(request.encode())
-        print(self.sock.recv(4096))
+        print(repr(self.sock.recv(4096)))
         # connection.sendall(data={})
-
-    def open_socket_connection(self, url: str) :
-        self.sock.connect((url, 80))
-        # connection = None
-        #
-        # while True:
-        #     connection, _ = self.sock.accept()
-        #
-        # return connection
