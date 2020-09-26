@@ -128,3 +128,4 @@ dmypy.json
 # Pyre type checker
 .pyre/
 Project1/venv/
+Project1/.idea/
