@@ -43,6 +43,7 @@ class HttpHandler:
 
         self.sock.sendall(str(request).encode('ASCII'))
         response_raw = self.sock.recv(4096)
+        # print(response_raw)
 
         response = HttpResponse()
         response.construct_from_string(response_raw.decode('ASCII'))
