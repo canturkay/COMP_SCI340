@@ -22,9 +22,9 @@ class HttpResponse:
 
         # Initializing method information
         response_line = lines[0]
-        self.http_version = HttpMethod[response_line.split(' ')[0]]
-        self.status_code = int(HttpMethod[response_line.split(' ')[1]])
-        self.reason_message = HttpMethod[response_line.split(' ')[3]]
+        self.http_version = response_line.split(' ')[0]
+        self.status_code = int(response_line.split(' ')[1])
+        self.reason_message = response_line.split(' ')[3]
 
         body_started = False
         body = ''
@@ -38,7 +38,10 @@ class HttpResponse:
                 else:
                     header = self.get_header(line)
                     if header.key == "Content-Type":
-                        self.content_type = HttpContentType[header.value]
+                        try:
+                            self.content_type = HttpContentType[header.value.split(';')[0].strip()]
+                        except:
+                            self.content_type = HttpContentType.unknown
                     elif header.key == "Content-Length":
                         try:
                             self.content_length = int(header.value)
@@ -48,9 +51,9 @@ class HttpResponse:
                         self.location = header.value
                     elif header.key == "Host":
                         self.host = header.value
-                    elif header.key == "Date":
-                        self.date = datetime.datetime.strptime(header.value, "%a, %d %b %Y %H:%M:%S")
-                        print(self.date)
+                    # elif header.key == "Date":
+                    #     self.date = datetime.datetime.strptime(header.value[:-4], "%a, %d %b %Y %H:%M:%S")
+                    #     print(self.date)
         if len(body) > 0:
             self.body = body[:-1]
 

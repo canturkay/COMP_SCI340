@@ -26,6 +26,7 @@ class HttpServer:
 
                     message = HttpRequest()
                     message.construct_from_string(data.decode('ASCII'))
+                    message.content_length = 0
 
                     skip_message = False
 

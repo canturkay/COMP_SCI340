@@ -1,13 +1,18 @@
-from part1 import http_response
+from packages.http_response import HttpResponse
+from packages.http_request import HttpRequest
+from packages.http_params import HttpMethod, HttpContentType, HttpMessageHeader
 import socket
 
 
 class HttpHandler:
     sock = None
 
-    def get(self, url: str, recursion_count: int = 0) -> http_response.HttpResponse:
+    def get(self, url: str, recursion_count: int = 0) -> HttpResponse:
         if recursion_count >= 10:
-            return http_response.HttpResponse(408, "Recursion limit of 10 exceeded", "")
+            return HttpResponse(
+                None,
+                408,
+                "Recursion limit of 10 exceeded")
 
         url_arr = url.split("/")
         base = url_arr[2]
@@ -16,28 +21,36 @@ class HttpHandler:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((base, 80))
 
-        request = "GET /" + addr + " HTTP/1.1\r\nHost:" + base + "\r\n\r\n"
-        self.sock.sendall(request.encode())
+        request = HttpRequest(
+            http_method=HttpMethod.GET,
+            address='/' + addr,
+            http_version="HTTP/1.1",
+            host=base,
+        )
 
-        response = (self.sock.recv(4096)).decode('ASCII')
-        print(response)
+        self.sock.sendall(str(request).encode('ASCII'))
+        print(str(request).encode("ASCII"))
+
+        response_raw = self.sock.recv(4096)
+        response = HttpResponse()
+
+        response.construct_from_string(response_raw.decode('ASCII'))
+
         self.sock.close()
-        lines = response.split('\r\n')
-        response_info = lines[0]
+        # lines = response.split('\r\n')
+        # response_info = lines[0]
+        #
+        # #for line in lines:
+        # #    print(line)
+        #
+        # request_version = response_info.split(' ')[0]
+        # status_code = response_info.split(' ')[1]
+        # reason_message = response_info.split(' ')[2]
 
-        #for line in lines:
-        #    print(line)
-
-        request_version = response_info.split(' ')[0]
-        status_code = response_info.split(' ')[1]
-        reason_message = response_info.split(' ')[2]
-
-        if status_code == '301' or status_code == '302':
-            new_url_line = self.get_header('Location:', lines)
-            if new_url_line is None or new_url_line.find(' ') == -1:
-                return http_response.HttpResponse(400, "Redirection failed, Location header not found")
-            new_url = new_url_line.split(' ')[1]
-            return self.get(new_url, recursion_count=recursion_count + 1)
+        if response.status_code == 301 or response.status_code == 302:
+            if response.location == None:
+                return HttpResponse(400, "Redirection failed, Location header not found")
+            return self.get(response.location, recursion_count=recursion_count + 1)
 
         content_type_line = self.get_header("Content-Type:", lines)
 

@@ -9,18 +9,16 @@ class HttpRequest:
     content_type = None
     content_length = None
 
-    location = None
-
     host = None
     body = None
 
     def __str__(self):
         return (self.http_method.value + " " + self.address + " " + self.http_version) + \
                (('\nHost: ' + self.host) if (self.host is not None) else "") + \
-               (('\nLocation: ' + self.location) if (self.location is not None) else "") + \
                (('\nContent-Type: ' + self.content_type.value) if (self.content_type is not None) else "") + \
                (('\nContent-Length: ' + str(self.content_length)) if (self.content_length is not None) else "") + \
-               (('\n\n' + self.body) if (self.body is not None) else "")
+               '\n\n' + \
+               (self.body if (self.body is not None) else "")
 
     def construct_from_string(self, message: str):
         lines = message.split('\r\n')
@@ -28,7 +26,7 @@ class HttpRequest:
         # Initializing method information
         method_line = lines[0]
         try:
-            self.http_method = HttpMethod[method_line.split(' ')[0]]
+            self.http_method = HttpMethod[method_line.split(' ')[0].strip()]
         except:
             self.http_method = HttpMethod.unknown
         self.address = method_line.split(' ')[1]
@@ -54,8 +52,6 @@ class HttpRequest:
                             self.content_length = int(header.value)
                         except:
                             print("Could not parse content length from header:\n" + header.key + ":" + header.value)
-                    elif header.key == "Location":
-                        self.location = header.value
                     elif header.key == "Host":
                         self.host = header.value
         if len(body) > 0:
@@ -72,13 +68,12 @@ class HttpRequest:
             return HttpMessageHeader(None, None)
 
     def __init__(self, http_method: HttpMethod = None, address: str = None, http_version: str = None,
-                 content_type: HttpContentType = None, content_length: int = None, location: str = None,
+                 content_type: HttpContentType = None, content_length: int = None,
                  host: str = None, body=None):
         self.http_method = http_method
-        self.address = address,
+        self.address = address
         self.http_version = http_version
         self.content_type = content_type
         self.content_length = content_length
-        self.location = location
         self.host = host
         self.body = body
