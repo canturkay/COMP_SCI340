@@ -14,7 +14,9 @@ def main(argv: list):
 
     http_handler = http_get_handler.HttpHandler()
     response = http_handler.get(url)
-    print(response.body)
+    if response.body:
+        for line in response.body.split('\n'):
+            print(line)
     if response.body and response.status_code == 200:
         sys.exit(0)
     else:
