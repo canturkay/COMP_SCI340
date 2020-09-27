@@ -14,8 +14,8 @@ def main(argv: list):
 
     http_handler = http_get_handler.HttpHandler()
     response = http_handler.get(url)
-    print(response.body)
     if response.body:
+        print(response.body)
         sys.exit(0)
     else:
         sys.exit(2)

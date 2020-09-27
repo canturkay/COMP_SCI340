@@ -120,7 +120,7 @@ class HttpServer:
             file = open('part2/files/' + file_name, 'r')
         elif os.path.exists('part2/files/' + file_name_second_option):
             file = open('part2/files/' + file_name_second_option, 'r')
-            
+
         if file:
             file_content = file.read()
             file.close()

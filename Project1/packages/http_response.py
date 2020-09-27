@@ -58,7 +58,7 @@ class HttpResponse:
                     #     self.date = datetime.datetime.strptime(header.value[:-4], "%a, %d %b %Y %H:%M:%S")
                     #     print(self.date)
         if len(body) > 0:
-            self.body = body[:-1]
+            self.body = body[:-2]
 
     def __str__(self):
         return (self.http_version + " " + str(self.status_code) + " " + self.reason_message) + \
