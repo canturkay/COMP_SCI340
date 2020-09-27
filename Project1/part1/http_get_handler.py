@@ -9,6 +9,12 @@ class HttpHandler:
     sock = None
 
     def get(self, url: str, recursion_count: int = 0) -> HttpResponse:
+        if len(url) < 7 or url[0:7] != "http://":
+            return HttpResponse(
+                None,
+                400,
+                "HTTPS is not available")
+
         if recursion_count >= 10:
             return HttpResponse(
                 None,
@@ -18,9 +24,15 @@ class HttpHandler:
         url_arr = url.split("/")
         base = url_arr[2]
         addr = "/".join(url_arr[3:])
+        port = 80
+
+        if base.find(':') != -1:
+            split_base = base.split(':')
+            base = split_base[0]
+            port = int(split_base[1])
 
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((base, 80))
+        self.sock.connect((base, port))
 
         request = HttpRequest(
             http_method=HttpMethod.GET,
