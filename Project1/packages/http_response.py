@@ -1,5 +1,6 @@
-from packages.http_params import HttpMessageHeader, HttpMethod, HttpContentType
 import datetime
+
+from packages.http_params import HttpMessageHeader, HttpContentType
 
 
 class HttpResponse:
@@ -18,13 +19,13 @@ class HttpResponse:
     body = None
 
     def construct_from_string(self, message: str):
-        lines = message.split('\n')
+        lines = message.split('\r\n')
 
         # Initializing method information
         response_line = lines[0]
         self.http_version = response_line.split(' ')[0]
         self.status_code = int(response_line.split(' ')[1])
-        self.reason_message = response_line.split(' ')[3]
+        self.reason_message = response_line.split(' ')[2]
 
         body_started = False
         body = ''
@@ -38,9 +39,11 @@ class HttpResponse:
                 else:
                     header = self.get_header(line)
                     if header.key == "Content-Type":
+                        content_type = HttpContentType.unknown
                         try:
-                            self.content_type = HttpContentType[header.value.split(';')[0].strip()]
+                            self.content_type = content_type.from_str(header.value.split(';')[0].strip())
                         except:
+                            print("AAA")
                             self.content_type = HttpContentType.unknown
                     elif header.key == "Content-Length":
                         try:
@@ -63,7 +66,8 @@ class HttpResponse:
                (('\nLocation: ' + self.location) if (self.location is not None) else "") + \
                (('\nContent-Type: ' + self.content_type.value) if (self.content_type is not None) else "") + \
                (('\nContent-Length: ' + str(self.content_length)) if (self.content_length is not None) else "") + \
-               (('\nDate: ' + self.date.strftime("%a, %d %b %Y %H:%M:%S") + " GMT") if (self.date is not None) else "") + \
+               (('\nDate: ' + self.date.strftime("%a, %d %b %Y %H:%M:%S") + " GMT") if (
+                           self.date is not None) else "") + \
                (('\n\n' + self.body) if (self.body is not None) else "")
 
     @staticmethod

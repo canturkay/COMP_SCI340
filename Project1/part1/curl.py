@@ -1,4 +1,5 @@
 import sys
+
 from part1 import http_get_handler
 
 
@@ -18,6 +19,7 @@ def main(argv: list):
         sys.exit(0)
     else:
         sys.exit(2)
+
 
 def wrong_format():
     print('curl.py http://<url>')

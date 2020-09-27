@@ -1,7 +1,8 @@
-from packages.http_response import HttpResponse
-from packages.http_request import HttpRequest
-from packages.http_params import HttpMethod, HttpContentType, HttpMessageHeader
 import socket
+
+from packages.http_params import HttpMethod, HttpContentType
+from packages.http_request import HttpRequest
+from packages.http_response import HttpResponse
 
 
 class HttpHandler:
@@ -29,11 +30,9 @@ class HttpHandler:
         )
 
         self.sock.sendall(str(request).encode('ASCII'))
-        print(str(request).encode("ASCII"))
-
         response_raw = self.sock.recv(4096)
-        response = HttpResponse()
 
+        response = HttpResponse()
         response.construct_from_string(response_raw.decode('ASCII'))
 
         self.sock.close()
@@ -46,25 +45,18 @@ class HttpHandler:
         # request_version = response_info.split(' ')[0]
         # status_code = response_info.split(' ')[1]
         # reason_message = response_info.split(' ')[2]
-
         if response.status_code == 301 or response.status_code == 302:
-            if response.location == None:
+            if response.location is None:
                 return HttpResponse(400, "Redirection failed, Location header not found")
             return self.get(response.location, recursion_count=recursion_count + 1)
 
-        content_type_line = self.get_header("Content-Type:", lines)
-
-        if content_type_line is not None:
-            if content_type_line is None or content_type_line.find(':') == -1:
-                return http_response.HttpResponse(400, "Content-Type header not found")
-            content_type = content_type_line.split(' ')[1]
-            if content_type != 'text/html;':
-                return http_response.HttpResponse(400, "Content type is not text/html")
-        else:
-            return http_response.HttpResponse(400, "Content type is not text/html")
-
-        body = self.get_body(lines)
-        return http_response.HttpResponse(status_code, reason_message, body)
+        # print(response)
+        if response.content_type is None:
+            return HttpResponse(400, "Content-Type header not found")
+        if response.content_type is not HttpContentType.html:
+            return HttpResponse(400, "Content type is not text/html")
+        return HttpResponse(status_code=response.status_code, reason_message=response.reason_message,
+                            body=response.body)
 
     @staticmethod
     def get_header(header_name: str, lines: list) -> str:

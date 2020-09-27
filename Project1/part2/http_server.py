@@ -1,8 +1,9 @@
 import os
-import socket
 import datetime
+import socket
+
+from packages.http_params import HttpMethod, HttpContentType
 from packages.http_request import HttpRequest
-from packages.http_params import HttpMessageHeader, HttpMethod, HttpContentType
 from packages.http_response import HttpResponse
 
 
@@ -73,25 +74,56 @@ class HttpServer:
                         file_name = message.address[1:]
                         response_body = self.read_file(file_name)
 
-                        response = HttpResponse(
-                            'HTTP/1.1',
-                            200,
-                            "OK",
-                            HttpContentType.html,
-                            len(response_body.encode('ASCII')),
-                            datetime.datetime.utcnow(),
-                            None,
-                            None,
-                            response_body
-                        )
-                        # print(response)
+                        if response_body is None:
+                            response_body = "\"The requested HTML file could not be found\""
+                            response = HttpResponse(
+                                'HTTP/1.1',
+                                404,
+                                "Not Found",
+                                HttpContentType.json,
+                                len(response_body.encode('ASCII')),
+                                datetime.datetime.utcnow(),
+                                None,
+                                None,
+                                response_body
+                            )
+                            # print(response)
 
-                        conn.sendall(str(response).encode('ASCII'))
+                            conn.sendall(str(response).encode('ASCII'))
+                        else:
+                            response = HttpResponse(
+                                'HTTP/1.1',
+                                200,
+                                "OK",
+                                HttpContentType.html,
+                                len(response_body.encode('ASCII')),
+                                datetime.datetime.utcnow(),
+                                None,
+                                None,
+                                response_body
+                            )
+                            # print(response)
+
+                            conn.sendall(str(response).encode('ASCII'))
 
     @staticmethod
     def read_file(file_name: str) -> str:
-        file = open('part2/files/' + file_name, 'r')
-        file_content = file.read()
-        file.close()
+        file_name_second_option = None
 
-        return file_content
+        if file_name[-4:] == "html":
+            file_name_second_option = file_name[:-1]
+        elif file_name[-3:] == "htm":
+            file_name_second_option = file_name + "l"
+
+        file = None
+        if os.path.exists('part2/files/' + file_name):
+            file = open('part2/files/' + file_name, 'r')
+        elif os.path.exists('part2/files/' + file_name_second_option):
+            file = open('part2/files/' + file_name_second_option, 'r')
+            
+        if file:
+            file_content = file.read()
+            file.close()
+
+            return file_content
+        return None
