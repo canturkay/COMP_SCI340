@@ -1,0 +1,88 @@
+from packages.http_params import HttpMessageHeader, HttpMethod, HttpContentType
+import datetime
+
+
+class HttpResponse:
+    http_version = None
+    status_code = None
+    reason_message = None
+
+    content_type = None
+    content_length = None
+
+    date = None
+
+    location = None
+
+    host = None
+    body = None
+
+    def construct_from_string(self, message: str):
+        lines = message.split('\n')
+
+        # Initializing method information
+        response_line = lines[0]
+        self.http_version = HttpMethod[response_line.split(' ')[0]]
+        self.status_code = int(HttpMethod[response_line.split(' ')[1]])
+        self.reason_message = HttpMethod[response_line.split(' ')[3]]
+
+        body_started = False
+        body = ''
+
+        for line in lines:
+            if body_started:
+                body += line + '\n'
+            else:
+                if line == '':
+                    body_started = True
+                else:
+                    header = self.get_header(line)
+                    if header.key == "Content-Type":
+                        self.content_type = HttpContentType[header.value]
+                    elif header.key == "Content-Length":
+                        try:
+                            self.content_length = int(header.value)
+                        except:
+                            print("Could not parse content length from header:\n" + header.key + ":" + header.value)
+                    elif header.key == "Location":
+                        self.location = header.value
+                    elif header.key == "Host":
+                        self.host = header.value
+                    elif header.key == "Date":
+                        self.date = datetime.datetime.strptime(header.value, "%a, %d %b %Y %H:%M:%S")
+                        print(self.date)
+        if len(body) > 0:
+            self.body = body[:-1]
+
+    def __str__(self):
+        return (self.http_version + " " + str(self.status_code) + " " + self.reason_message) + \
+               (('\nHost: ' + self.host) if (self.host is not None) else "") + \
+               (('\nLocation: ' + self.location) if (self.location is not None) else "") + \
+               (('\nContent-Type: ' + self.content_type.value) if (self.content_type is not None) else "") + \
+               (('\nContent-Length: ' + str(self.content_length)) if (self.content_length is not None) else "") + \
+               (('\nDate: ' + self.date.strftime("%a, %d %b %Y %H:%M:%S") + " GMT") if (self.date is not None) else "") + \
+               (('\n\n' + self.body) if (self.body is not None) else "")
+
+    @staticmethod
+    def get_header(line: str) -> HttpMessageHeader:
+        line_values = line.split(' ')
+        if len(line_values) >= 2:
+            header_key = line_values[0][:-1]
+            header_value = ' '.join(line_values[1:])
+            return HttpMessageHeader(header_key, header_value)
+        else:
+            return HttpMessageHeader(None, None)
+
+    def __init__(self, http_version: str = None, status_code: int = None, reason_message: str = None,
+                 content_type: HttpContentType = None, content_length: int = None, date: datetime = None,
+                 location: str = None,
+                 host: str = None, body=None):
+        self.http_version = http_version
+        self.status_code = status_code
+        self.reason_message = reason_message
+        self.content_type = content_type
+        self.content_length = content_length
+        self.date = date
+        self.location = location
+        self.host = host
+        self.body = body

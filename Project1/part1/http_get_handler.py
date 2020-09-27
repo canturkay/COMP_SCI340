@@ -20,6 +20,7 @@ class HttpHandler:
         self.sock.sendall(request.encode())
 
         response = (self.sock.recv(4096)).decode('ASCII')
+        print(response)
         self.sock.close()
         lines = response.split('\r\n')
         response_info = lines[0]
