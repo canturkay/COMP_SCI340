@@ -14,7 +14,7 @@ def main(argv: list):
 
     http_handler = http_get_handler.HttpHandler()
     response = http_handler.get(url)
-    if response.body:
+    if response.body and response.status_code == 200:
         print(response.body)
         sys.exit(0)
     else:
@@ -22,7 +22,7 @@ def main(argv: list):
 
 
 def wrong_format():
-    print('curl.py http://<url>')
+    print('Correct Format:\ncurl.py http://<url>')
     sys.exit(2)
 
 
