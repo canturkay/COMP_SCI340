@@ -11,8 +11,6 @@ class HttpResponse:
     content_type = None
     content_length = None
 
-    date = None
-
     location = None
 
     host = None
@@ -43,7 +41,6 @@ class HttpResponse:
                         try:
                             self.content_type = content_type.from_str(header.value.split(';')[0].strip())
                         except:
-                            print("AAA")
                             self.content_type = HttpContentType.unknown
                     elif header.key == "Content-Length":
                         try:

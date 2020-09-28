@@ -49,15 +49,7 @@ class HttpHandler:
         response.construct_from_string(response_raw.decode('ASCII'))
 
         self.sock.close()
-        # lines = response.split('\r\n')
-        # response_info = lines[0]
-        #
-        # #for line in lines:
-        # #    print(line)
-        #
-        # request_version = response_info.split(' ')[0]
-        # status_code = response_info.split(' ')[1]
-        # reason_message = response_info.split(' ')[2]
+
         if response.status_code == 301 or response.status_code == 302:
             if response.location is None:
                 return HttpResponse(400, "Redirection failed, Location header not found")
@@ -70,25 +62,3 @@ class HttpHandler:
             return HttpResponse(400, "Content type is not text/html")
         return HttpResponse(status_code=response.status_code, reason_message=response.reason_message,
                             body=response.body)
-
-    @staticmethod
-    def get_header(header_name: str, lines: list) -> str:
-        for line in lines:
-            if len(line) >= len(header_name) and line[0:len(header_name)] == header_name:
-                return line
-        return None
-
-    @staticmethod
-    def get_body(lines: list) -> str:
-        body = ''
-        body_found = False
-        for line in lines:
-            if body_found:
-                body += line + "\n"
-            if line == '':
-                body_found = True
-        return body
-
-
-if __name__ == "__main__":
-    pass

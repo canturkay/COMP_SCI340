@@ -29,7 +29,6 @@ class HttpMethod(Enum):
         else:
             return self.unknown
 
-
 class HttpContentType(Enum):
     html = 'text/html'
     json = 'application/json'
