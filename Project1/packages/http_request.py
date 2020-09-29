@@ -18,7 +18,7 @@ class HttpRequest:
                (('\r\nContent-Type: ' + self.content_type.value) if (self.content_type is not None) else "") + \
                (('\r\nContent-Length: ' + str(self.content_length)) if (self.content_length is not None) else "") + \
                '\r\n\r\n' + \
-               (self.body if (self.body is not None) else "")
+               (self.body + '\r\n\r\n' if (self.body is not None) else "")
 
     def construct_from_string(self, message: str):
         lines = message.split('\r\n')
@@ -26,6 +26,7 @@ class HttpRequest:
         # Initializing method information
         method_line = lines[0]
         http_method = HttpMethod.unknown
+        print(method_line)
         try:
             self.http_method = http_method.from_str(method_line.split(' ')[0].strip())
         except:

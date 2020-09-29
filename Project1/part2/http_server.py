@@ -21,7 +21,7 @@ class HttpServer:
             print('Connected by', addr)
             while True:
                 data = conn.recv(4096)
-
+                
                 if not data:
                     break
 
@@ -57,8 +57,8 @@ class HttpServer:
 
                     response = HttpResponse(
                         'HTTP/1.1',
-                        400,
-                        "Bad Request",
+                        403,
+                        "Forbidden",
                         HttpContentType.json,
                         len(response_body.encode('ASCII')),
                         datetime.datetime.utcnow(),
