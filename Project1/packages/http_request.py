@@ -60,7 +60,6 @@ class HttpRequest:
         if len(body) > 0:
             self.body = body[:-2]
 
-
     def __init__(self, http_method: HttpMethod = None, address: str = None, http_version: str = None,
                  content_type: HttpContentType = None, content_length: int = None,
                  host: str = None, body=None):

@@ -43,6 +43,15 @@ class HttpContentType(Enum):
             return self.unknown
 
 
+class QueryParameter:
+    parameter = None
+    value = None
+
+    def __init__(self, parameter, value):
+        self.parameter = parameter
+        self.value = value
+
+
 def get_header(line: str) -> HttpMessageHeader:
     line_values = line.split(' ')
     if len(line_values) >= 2:
