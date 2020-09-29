@@ -1,4 +1,4 @@
-from packages.http_params import HttpMessageHeader, HttpMethod, HttpContentType
+from packages.http_params import HttpMessageHeader, HttpMethod, HttpContentType, get_header
 
 
 class HttpRequest:
@@ -43,7 +43,7 @@ class HttpRequest:
                 if line == '':
                     body_started = True
                 else:
-                    header = self.get_header(line)
+                    header = get_header(line)
                     if header.key == "Content-Type":
                         content_type = HttpContentType.unknown
                         try:
@@ -60,15 +60,6 @@ class HttpRequest:
         if len(body) > 0:
             self.body = body[:-1]
 
-    @staticmethod
-    def get_header(line: str) -> HttpMessageHeader:
-        line_values = line.split(' ')
-        if len(line_values) >= 2:
-            header_key = line_values[0][:-1]
-            header_value = ' '.join(line_values[1:])
-            return HttpMessageHeader(header_key, header_value)
-        else:
-            return HttpMessageHeader(None, None)
 
     def __init__(self, http_method: HttpMethod = None, address: str = None, http_version: str = None,
                  content_type: HttpContentType = None, content_length: int = None,

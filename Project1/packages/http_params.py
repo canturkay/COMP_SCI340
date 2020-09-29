@@ -1,6 +1,5 @@
 from enum import Enum
 
-
 class HttpMessageHeader:
     key = None
     value = None
@@ -42,3 +41,13 @@ class HttpContentType(Enum):
             return self.json
         else:
             return self.unknown
+
+
+def get_header(line: str) -> HttpMessageHeader:
+    line_values = line.split(' ')
+    if len(line_values) >= 2:
+        header_key = line_values[0][:-1]
+        header_value = ' '.join(line_values[1:])
+        return HttpMessageHeader(header_key, header_value)
+    else:
+        return HttpMessageHeader(None, None)

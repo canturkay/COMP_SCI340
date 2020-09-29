@@ -1,6 +1,6 @@
 import datetime
 
-from packages.http_params import HttpMessageHeader, HttpContentType
+from packages.http_params import HttpMessageHeader, HttpContentType, get_header
 
 
 class HttpResponse:
@@ -35,7 +35,7 @@ class HttpResponse:
                 if line == '':
                     body_started = True
                 else:
-                    header = self.get_header(line)
+                    header = get_header(line)
                     if header.key == "Content-Type":
                         print(header.value)
                         content_type = HttpContentType.unknown
@@ -67,16 +67,6 @@ class HttpResponse:
                (('\r\nDate: ' + self.date.strftime("%a, %d %b %Y %H:%M:%S") + " GMT") if (
                            self.date is not None) else "") + \
                (('\r\n\r\n' + self.body) if (self.body is not None) else "")
-
-    @staticmethod
-    def get_header(line: str) -> HttpMessageHeader:
-        line_values = line.split(' ')
-        if len(line_values) >= 2:
-            header_key = line_values[0][:-1]
-            header_value = ' '.join(line_values[1:])
-            return HttpMessageHeader(header_key, header_value)
-        else:
-            return HttpMessageHeader(None, None)
 
     def __init__(self, http_version: str = None, status_code: int = None, reason_message: str = None,
                  content_type: HttpContentType = None, content_length: int = None, date: datetime = None,
