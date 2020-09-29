@@ -1,5 +1,6 @@
 import unittest
 
+from packages.http_request import HttpRequest
 from packages.request_builder import RequestBuilder
 
 
@@ -34,6 +35,10 @@ class IntermittentDataTests(unittest.TestCase):
         assert rb.messages['1'].body_bytes == 11
         assert rb.messages['1'].content_length == 12
         assert rb.receive_data('1', '!') == 'GET /basic.html HTTP/1.1\r\nContent-Length: 12\r\n\r\nHello WORLD!'
+
+        rq = HttpRequest()
+        rq.construct_from_string('GET /basic.html HTTP/1.1\r\nContent-Length: 12\r\n\r\nHello WORLD!')
+        print(rq)
 
 
 if __name__ == '__main__':

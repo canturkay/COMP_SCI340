@@ -58,7 +58,7 @@ class HttpRequest:
                     elif header.key == "Host":
                         self.host = header.value
         if len(body) > 0:
-            self.body = body[:-1]
+            self.body = body[:-2]
 
 
     def __init__(self, http_method: HttpMethod = None, address: str = None, http_version: str = None,
