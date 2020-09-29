@@ -11,7 +11,9 @@ class RequestBuilder:
         self.messages[addr].receive_data(data)
         if self.messages[addr].body_bytes is not None and\
                 self.messages[addr].body_bytes == self.messages[addr].content_length:
-            return self.messages[addr].message
+            message = self.messages[addr].message
+            del self.messages[addr]
+            return message
 
         return None
 
