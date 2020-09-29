@@ -11,6 +11,7 @@ class HttpServer:
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def open_connection(self, port: int):
+        print(port)
         self.sock.bind(('', port))
 
         self.sock.listen()
