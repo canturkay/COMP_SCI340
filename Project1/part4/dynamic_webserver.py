@@ -65,6 +65,8 @@ class DynamicWebServer:
                     400,
                     'Bad Request'
                 )
+                conn.sendall(str(response).encode('ASCII'))
+                return
             else:
                 operation = message.address.split('?')[0][1:]
                 query_params = message.address.split('?')[1]

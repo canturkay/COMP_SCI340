@@ -42,7 +42,7 @@ class HttpServerMultiConnection:
         message.content_length = 0
 
         print(message.http_method.value + " " + message.address)
-        
+
         skip_message = False
 
         if message.http_method != HttpMethod.GET:
