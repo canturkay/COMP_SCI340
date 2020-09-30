@@ -42,13 +42,22 @@ class HttpHandler:
         )
 
         self.sock.sendall(str(request).encode('ASCII'))
-        response_raw = self.sock.recv(4096)
-        # print(response_raw)
-
+        body_length = None
+        content_length = None
+        response_raw = b''
         response = HttpResponse()
-        response.construct_from_string(response_raw.decode('ASCII'))
+        while content_length is None or body_length is None or body_length < content_length:
+            response_raw += self.sock.recv(4096)
+
+            response.construct_from_string(response_raw.decode('ASCII'))
+
+            content_length = response.content_length
+            body_length = len(response.body.encode('ASCII'))
+            print(content_length, body_length)
 
         self.sock.close()
+        response = HttpResponse()
+        response.construct_from_string(response_raw.decode('ASCII'))
 
         if response.status_code == 301 or response.status_code == 302:
             if response.location is None:
