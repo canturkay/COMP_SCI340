@@ -29,7 +29,7 @@ class HttpServer:
                 message.construct_from_string(data.decode('ASCII'))
                 message.content_length = 0
 
-                print(message.http_method + " " + message.address)
+                print(message.http_method.value + " " + message.address)
 
                 skip_message = False
 
