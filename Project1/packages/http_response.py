@@ -37,7 +37,6 @@ class HttpResponse:
                 else:
                     header = get_header(line)
                     if header.key == "Content-Type":
-                        print(header.value)
                         content_type = HttpContentType.unknown
                         try:
                             self.content_type = content_type.from_str(header.value.split(';')[0].strip())

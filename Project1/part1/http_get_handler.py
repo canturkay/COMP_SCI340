@@ -46,14 +46,19 @@ class HttpHandler:
         content_length = None
         response_raw = b''
         response = HttpResponse()
+
         while content_length is None or body_length is None or body_length < content_length:
-            response_raw += self.sock.recv(4096)
+            new_data = self.sock.recv(4096)
+
+            if new_data is None or new_data == '':
+                break
+
+            response_raw += new_data
 
             response.construct_from_string(response_raw.decode('ASCII'))
 
             content_length = response.content_length
-            body_length = len(response.body.encode('ASCII'))
-            print(content_length, body_length)
+            body_length = len(response_raw.split(b'\r\n\r\n')[1])
 
         self.sock.close()
         response = HttpResponse()
@@ -62,9 +67,9 @@ class HttpHandler:
         if response.status_code == 301 or response.status_code == 302:
             if response.location is None:
                 return HttpResponse(400, "Redirection failed, Location header not found")
+            print("Redirecting to: " + response.location)
             return self.get(response.location, recursion_count=recursion_count + 1)
 
-        # print(response)
         if response.content_type is None:
             return HttpResponse(400, "Content-Type header not found")
         if response.content_type is not HttpContentType.html:

@@ -65,7 +65,6 @@ class DynamicWebServer:
                     400,
                     'Bad Request'
                 )
-                return
             else:
                 operation = message.address.split('?')[0][1:]
                 query_params = message.address.split('?')[1]
@@ -76,18 +75,15 @@ class DynamicWebServer:
                     result = 1.0
                     operands = []
                     for qp in query_params:
-                        num = qp.split('=')[1]
-                        try:
-                            parsed_num = float(num)
-                            operands.append(qp.split('=')[0])
-                            result *= parsed_num
-                        except:
-                            all_nums = False
-                            break
-                        # all_nums = (type(num) == int or type(num) == float) and all_nums
-                        # if all_nums:
-                        # else:
-                        #     break
+                        if '=' in qp:
+                            num = qp.split('=')[1]
+                            try:
+                                parsed_num = float(num)
+                                operands.append(qp.split('=')[0])
+                                result *= parsed_num
+                            except:
+                                all_nums = False
+                                break
 
                     if all_nums:
                         if result > sys.float_info.max:
@@ -102,6 +98,7 @@ class DynamicWebServer:
                         response_body = json.dumps({"operation": operation, "operands": operands, "result": result})
 
                         if operation == 'product':
+                            print(response_body)
                             response = HttpResponse(
                                 'HTTP/1.1',
                                 200,

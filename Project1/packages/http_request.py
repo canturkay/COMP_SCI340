@@ -26,7 +26,6 @@ class HttpRequest:
         # Initializing method information
         method_line = lines[0]
         http_method = HttpMethod.unknown
-        print(method_line)
         try:
             self.http_method = http_method.from_str(method_line.split(' ')[0].strip())
         except:
