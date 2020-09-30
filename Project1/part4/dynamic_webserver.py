@@ -45,7 +45,7 @@ class DynamicWebServer:
         message.content_length = 0
 
         print(message.http_method.value + " " + message.address)
-        
+
         if message.http_method != HttpMethod.GET:
             response_body = "\"Only GET method is supported\""
             response = HttpResponse(
@@ -61,7 +61,7 @@ class DynamicWebServer:
             )
             conn.sendall(str(response).encode('ASCII'))
         else:
-            if '?' not in message.address:
+            if '?' not in message.address or '=' not in message.address:
                 response = HttpResponse(
                     'HTTP/1.1',
                     400,
