@@ -68,6 +68,7 @@ class DynamicWebServer:
                 )
                 conn.sendall(str(response).encode('ASCII'))
                 self.read_list.remove(conn)
+                conn.close()
                 return
             else:
                 operation = message.address.split('?')[0][1:]
@@ -102,7 +103,6 @@ class DynamicWebServer:
                         response_body = json.dumps({"operation": operation, "operands": operands, "result": result})
 
                         if operation == 'product':
-                            print(response_body)
                             response = HttpResponse(
                                 'HTTP/1.1',
                                 200,
@@ -123,6 +123,7 @@ class DynamicWebServer:
                             )
                             conn.sendall(str(response).encode('ASCII'))
                             self.read_list.remove(conn)
+                            conn.close()
                     else:
                         response = HttpResponse(
                             'HTTP/1.1',
@@ -131,6 +132,7 @@ class DynamicWebServer:
                         )
                         conn.sendall(str(response).encode('ASCII'))
                         self.read_list.remove(conn)
+                        conn.close()
                 else:
                     response = HttpResponse(
                         'HTTP/1.1',
@@ -139,3 +141,4 @@ class DynamicWebServer:
                     )
                     conn.sendall(str(response).encode('ASCII'))
                     self.read_list.remove(conn)
+                    conn.close()
