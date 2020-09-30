@@ -36,9 +36,10 @@ class DynamicWebServer:
                         read.close()
                         break
                     else:
-                        self.process_request(data, conn)
+                        self.process_request(data, read)
 
-    def process_request(self, data, conn: socket):
+    @staticmethod
+    def process_request(data, conn: socket):
         message = HttpRequest()
         message.construct_from_string(data.decode('ASCII'))
         message.content_length = 0
@@ -60,6 +61,7 @@ class DynamicWebServer:
         else:
             operation = message.address.split('?')[0][1:]
             query_params = message.address.split('?')[1]
+
             if query_params:
                 query_params = query_params.split('&')
                 all_nums = True
@@ -67,18 +69,29 @@ class DynamicWebServer:
                 operands = []
                 for qp in query_params:
                     num = qp.split('=')[1]
-                    all_nums = type(num) == int or type(num) == float
-                    if all_nums:
-                        operands.append(num)
-                        result *= float(num)
-                    else:
+                    try:
+                        parsed_num = float(num)
+                        operands.append(qp.split('=')[0])
+                        result *= parsed_num
+                    except:
+                        all_nums = False
                         break
+                    # all_nums = (type(num) == int or type(num) == float) and all_nums
+                    # if all_nums:
+                    # else:
+                    #     break
+
                 if all_nums:
                     if result > sys.float_info.max:
                         result = float('inf')
                     if result < - sys.float_info.max:
                         result = float('-inf')
-                    response_body = json.dumps({"operation": operation,"operands": operands,"result": result})
+
+                    if result == float('inf'):
+                        result = "inf"
+                    elif result == float('-inf'):
+                        result = "-inf"
+                    response_body = json.dumps({"operation": operation, "operands": operands, "result": result})
 
                     if operation == 'product':
                         response = HttpResponse(

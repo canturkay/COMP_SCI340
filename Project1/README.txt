@@ -1,0 +1,4 @@
+COMP_SCI 340
+Fall 2020 - Project 1
+Tuna BAYVAS
+Adnan Can TURKAY

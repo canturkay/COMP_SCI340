@@ -34,7 +34,7 @@ class HttpServerMultiConnection:
                         read.close()
                         break
                     else:
-                        self.process_request(data, conn)
+                        self.process_request(data, read)
 
     def process_request(self, data, conn: socket):
         message = HttpRequest()
