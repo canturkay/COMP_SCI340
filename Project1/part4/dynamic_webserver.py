@@ -31,7 +31,7 @@ class DynamicWebServer:
                     read_list.append(conn)
                 else:
                     data = read.recv(4096)
-                    if not data:
+                    if not data or data == '':
                         read_list.remove(read)
                         read.close()
                         break
