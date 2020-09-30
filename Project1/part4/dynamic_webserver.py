@@ -37,9 +37,26 @@ class DynamicWebServer:
                     else:
                         self.process_request(data, read)
 
-    def process_request(self, data, conn: socket):
+    @staticmethod
+    def process_request(data, conn: socket):
         message = HttpRequest()
-        message.construct_from_string(data.decode('ASCII'))
+        err = message.construct_from_string(data.decode('ASCII'))
+        if err:
+            response_body = "\"Wrong format\""
+            response = HttpResponse(
+                'HTTP/1.1',
+                400,
+                "Bad Request",
+                HttpContentType.json,
+                len(response_body.encode('ASCII')),
+                datetime.datetime.utcnow(),
+                None,
+                None,
+                response_body
+            )
+            conn.sendall(str(response).encode('ASCII'))
+            return
+
         message.content_length = 0
 
         print(message.http_method.value + " " + message.address)
@@ -57,19 +74,20 @@ class DynamicWebServer:
                 None,
                 response_body
             )
-            conn.sendall(str(response).encode('ASCII'))
         else:
             if '?' not in message.address or '=' not in message.address:
-                print(message.address)
+                response_body = "\"A parameter should be provided\""
                 response = HttpResponse(
                     'HTTP/1.1',
                     400,
-                    'Bad Request'
+                    "Bad Request",
+                    HttpContentType.json,
+                    len(response_body.encode('ASCII')),
+                    datetime.datetime.utcnow(),
+                    None,
+                    None,
+                    response_body
                 )
-                conn.sendall(str(response).encode('ASCII'))
-                self.read_list.remove(conn)
-                conn.close()
-                return
             else:
                 operation = message.address.split('?')[0][1:]
                 query_params = message.address.split('?')[1]
@@ -80,7 +98,7 @@ class DynamicWebServer:
                     result = 1.0
                     operands = []
                     for qp in query_params:
-                        if '=' in qp:
+                        if '=' in qp and len(qp.split('=')[1]) > 0:
                             num = qp.split('=')[1]
                             try:
                                 parsed_num = float(num)
@@ -89,6 +107,8 @@ class DynamicWebServer:
                             except:
                                 all_nums = False
                                 break
+                        else:
+                            all_nums = False
 
                     if all_nums:
                         if result > sys.float_info.max:
@@ -114,31 +134,37 @@ class DynamicWebServer:
                                 None,
                                 response_body
                             )
-                            conn.sendall(str(response).encode('ASCII'))
                         else:
+                            response_body = "\"Only product is available\""
                             response = HttpResponse(
                                 'HTTP/1.1',
                                 404,
-                                "Not Found"
+                                "Not Found",
+                                HttpContentType.json,
+                                len(response_body.encode('ASCII')),
+                                datetime.datetime.utcnow(),
+                                None,
+                                None,
+                                response_body
                             )
-                            conn.sendall(str(response).encode('ASCII'))
-                            self.read_list.remove(conn)
-                            conn.close()
                     else:
+                        response_body = "\"Parameter values should be numeric\""
                         response = HttpResponse(
                             'HTTP/1.1',
                             400,
-                            'Bad Request'
+                            "Bad Request",
+                            HttpContentType.json,
+                            len(response_body.encode('ASCII')),
+                            datetime.datetime.utcnow(),
+                            None,
+                            None,
+                            response_body
                         )
-                        conn.sendall(str(response).encode('ASCII'))
-                        self.read_list.remove(conn)
-                        conn.close()
                 else:
                     response = HttpResponse(
                         'HTTP/1.1',
                         400,
                         'Bad Request'
                     )
-                    conn.sendall(str(response).encode('ASCII'))
-                    self.read_list.remove(conn)
-                    conn.close()
+        print(response)
+        conn.sendall(str(response).encode('ASCII'))
