@@ -66,8 +66,8 @@ class DynamicWebServer:
                     400,
                     'Bad Request'
                 )
-                self.read_list.remove(conn)
                 conn.sendall(str(response).encode('ASCII'))
+                self.read_list.remove(conn)
                 return
             else:
                 operation = message.address.split('?')[0][1:]
@@ -114,12 +114,14 @@ class DynamicWebServer:
                                 None,
                                 response_body
                             )
+                            conn.sendall(str(response).encode('ASCII'))
                         else:
                             response = HttpResponse(
                                 'HTTP/1.1',
                                 404,
                                 "Not Found"
                             )
+                            conn.sendall(str(response).encode('ASCII'))
                             self.read_list.remove(conn)
                     else:
                         response = HttpResponse(
@@ -127,6 +129,7 @@ class DynamicWebServer:
                             400,
                             'Bad Request'
                         )
+                        conn.sendall(str(response).encode('ASCII'))
                         self.read_list.remove(conn)
                 else:
                     response = HttpResponse(
@@ -134,5 +137,5 @@ class DynamicWebServer:
                         400,
                         'Bad Request'
                     )
+                    conn.sendall(str(response).encode('ASCII'))
                     self.read_list.remove(conn)
-            conn.sendall(str(response).encode('ASCII'))
