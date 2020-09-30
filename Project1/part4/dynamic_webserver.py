@@ -62,6 +62,7 @@ class DynamicWebServer:
             conn.sendall(str(response).encode('ASCII'))
         else:
             if '?' not in message.address or '=' not in message.address:
+                print(message.address)
                 response = HttpResponse(
                     'HTTP/1.1',
                     400,
