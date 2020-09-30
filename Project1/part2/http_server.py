@@ -102,7 +102,6 @@ class HttpServer:
                             None,
                             response_body
                         )
-                        print(response)
 
                         conn.sendall(str(response).encode('ASCII'))
 
