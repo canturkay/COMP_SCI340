@@ -7,7 +7,7 @@ from packages.http_params import HttpMethod, HttpContentType
 from packages.http_request import HttpRequest
 from packages.http_response import HttpResponse
 
-
+#following based off code from https://pymotw.com/3/select/
 class HttpServerMultiConnection:
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     
