@@ -44,6 +44,8 @@ class DynamicWebServer:
         message.construct_from_string(data.decode('ASCII'))
         message.content_length = 0
 
+        print(message.http_method.value + " " + message.address)
+        
         if message.http_method != HttpMethod.GET:
             response_body = "\"Only GET method is supported\""
             response = HttpResponse(
