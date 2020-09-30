@@ -12,34 +12,32 @@ from packages.http_response import HttpResponse
 
 class DynamicWebServer:
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    read_list = [sock]
 
     def open_connection(self, port: int):
         self.sock.bind(('', port))
 
         self.sock.listen(10)
 
-        read_list = [self.sock]
-
-        while read_list:
-            reads, writes, exceptions = select.select(read_list, [], read_list)
+        while self.read_list:
+            reads, writes, exceptions = select.select(self.read_list, [], self.read_list)
 
             for read in reads:
                 if read is self.sock:
                     conn, addr = self.sock.accept()
                     print("Connected", addr)
                     conn.setblocking(0)
-                    read_list.append(conn)
+                    self.read_list.append(conn)
                 else:
                     data = read.recv(4096)
                     if not data or data == '':
-                        read_list.remove(read)
+                        self.read_list.remove(read)
                         read.close()
                         break
                     else:
                         self.process_request(data, read)
 
-    @staticmethod
-    def process_request(data, conn: socket):
+    def process_request(self, data, conn: socket):
         message = HttpRequest()
         message.construct_from_string(data.decode('ASCII'))
         message.content_length = 0
@@ -68,6 +66,7 @@ class DynamicWebServer:
                     400,
                     'Bad Request'
                 )
+                self.read_list.remove(conn)
                 conn.sendall(str(response).encode('ASCII'))
                 return
             else:
@@ -121,16 +120,19 @@ class DynamicWebServer:
                                 404,
                                 "Not Found"
                             )
+                            self.read_list.remove(conn)
                     else:
                         response = HttpResponse(
                             'HTTP/1.1',
                             400,
                             'Bad Request'
                         )
+                        self.read_list.remove(conn)
                 else:
                     response = HttpResponse(
                         'HTTP/1.1',
                         400,
                         'Bad Request'
                     )
+                    self.read_list.remove(conn)
             conn.sendall(str(response).encode('ASCII'))
