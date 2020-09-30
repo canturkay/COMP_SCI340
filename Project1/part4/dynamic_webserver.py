@@ -2,6 +2,8 @@ import os
 import socket
 import select
 import datetime
+import json
+import sys
 
 from packages.http_params import HttpMethod, HttpContentType
 from packages.http_request import HttpRequest
@@ -56,22 +58,56 @@ class DynamicWebServer:
             )
             conn.sendall(str(response).encode('ASCII'))
         else:
+            operation = message.address.split('?')[0][1:]
             query_params = message.address.split('?')[1]
+            if query_params:
+                query_params = query_params.split('&')
+                all_nums = True
+                result = 1.0
+                operands = []
+                for qp in query_params:
+                    num = qp.split('=')[1]
+                    all_nums = type(num) == int or type(num) == float
+                    if all_nums:
+                        operands.append(num)
+                        result *= float(num)
+                    else:
+                        break
+                if all_nums:
+                    if result > sys.float_info.max:
+                        result = float('inf')
+                    if result < - sys.float_info.max:
+                        result = float('-inf')
+                    response_body = json.dumps({"operation": operation,"operands": operands,"result": result})
 
-
-            response_body = '{"operation": "product","operands": [12, 60, 0.5],"result": 360}'
-
-
-            response = HttpResponse(
-                'HTTP/1.1',
-                200,
-                "OK",
-                HttpContentType.json,
-                len(response_body.encode('ASCII')),
-                datetime.datetime.utcnow(),
-                None,
-                None,
-                response_body
-            )
-
+                    if operation == 'product':
+                        response = HttpResponse(
+                            'HTTP/1.1',
+                            200,
+                            "OK",
+                            HttpContentType.json,
+                            len(response_body.encode('ASCII')),
+                            datetime.datetime.utcnow(),
+                            None,
+                            None,
+                            response_body
+                        )
+                    else:
+                        response = HttpResponse(
+                            'HTTP/1.1',
+                            404,
+                            "Not Found"
+                        )
+                else:
+                    response = HttpResponse(
+                        'HTTP/1.1',
+                        400,
+                        'Bad Request'
+                    )
+            else:
+                response = HttpResponse(
+                    'HTTP/1.1',
+                    400,
+                    'Bad Request'
+                )
             conn.sendall(str(response).encode('ASCII'))
