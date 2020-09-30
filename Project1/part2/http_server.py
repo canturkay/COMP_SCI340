@@ -29,6 +29,8 @@ class HttpServer:
                 message.construct_from_string(data.decode('ASCII'))
                 message.content_length = 0
 
+                print(message.http_method + " " + message.address)
+
                 skip_message = False
 
                 if message.http_method != HttpMethod.GET:
