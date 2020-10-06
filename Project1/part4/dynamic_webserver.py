@@ -76,18 +76,33 @@ class DynamicWebServer:
             )
         else:
             if '?' not in message.address or '=' not in message.address:
-                response_body = "\"A parameter should be provided\""
-                response = HttpResponse(
-                    'HTTP/1.1',
-                    400,
-                    "Bad Request",
-                    HttpContentType.json,
-                    len(response_body.encode('ASCII')),
-                    datetime.datetime.utcnow(),
-                    None,
-                    None,
-                    response_body
-                )
+                print(message.address[:8])
+                if message.address[:8] == "/product":
+                    response_body = "\"A parameter should be provided\""
+                    response = HttpResponse(
+                        'HTTP/1.1',
+                        400,
+                        "Bad Request",
+                        HttpContentType.json,
+                        len(response_body.encode('ASCII')),
+                        datetime.datetime.utcnow(),
+                        None,
+                        None,
+                        response_body
+                    )
+                else:
+                    response_body = "\"Operation not found\""
+                    response = HttpResponse(
+                        'HTTP/1.1',
+                        404,
+                        "Not Found",
+                        HttpContentType.json,
+                        len(response_body.encode('ASCII')),
+                        datetime.datetime.utcnow(),
+                        None,
+                        None,
+                        response_body
+                    )
             else:
                 operation = message.address.split('?')[0][1:]
                 query_params = message.address.split('?')[1]
@@ -102,7 +117,7 @@ class DynamicWebServer:
                             num = qp.split('=')[1]
                             try:
                                 parsed_num = float(num)
-                                operands.append(qp.split('=')[0])
+                                operands.append(int(parsed_num) if int(parsed_num) == parsed_num else parsed_num)
                                 result *= parsed_num
                             except:
                                 all_nums = False
@@ -120,6 +135,11 @@ class DynamicWebServer:
                             result = "inf"
                         elif result == float('-inf'):
                             result = "-inf"
+
+                        try:
+                            result = int(result) if int(result) == result else result
+                        except:
+                            pass
                         response_body = json.dumps({"operation": operation, "operands": operands, "result": result})
 
                         if operation == 'product':
