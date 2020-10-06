@@ -17,15 +17,16 @@ def main(argv: list):
 
     if response.body:
         for line in response.body.split('\n'):
-            print(line)
+            sys.stdout.write(line + '\n')
     if response.body and response.status_code == 200:
         sys.exit(0)
     else:
+        sys.stderr.write(str(response.status_code) + ": " + response.reason_message)
         sys.exit(2)
 
 
 def wrong_format():
-    print('Correct Format:\ncurl.py http://<url>')
+    sys.stderr.write('Correct Format:\ncurl.py http://<url>')
     sys.exit(2)
 
 

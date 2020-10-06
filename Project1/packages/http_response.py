@@ -23,7 +23,7 @@ class HttpResponse:
         response_line = lines[0]
         self.http_version = response_line.split(' ')[0]
         self.status_code = int(response_line.split(' ')[1])
-        self.reason_message = response_line.split(' ')[2]
+        self.reason_message = ' '.join(response_line.split(' ')[2:])
 
         body_started = False
         body = ''

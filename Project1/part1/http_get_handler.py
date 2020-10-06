@@ -1,4 +1,5 @@
 import socket
+import sys
 
 from packages.http_params import HttpMethod, HttpContentType
 from packages.http_request import HttpRequest
@@ -11,15 +12,14 @@ class HttpHandler:
     def get(self, url: str, recursion_count: int = 0) -> HttpResponse:
         if len(url) < 7 or url[0:7] != "http://":
             return HttpResponse(
-                None,
+                status_code=
                 400,
-                "HTTPS is not available")
+                reason_message="HTTPS is not available")
 
         if recursion_count >= 10:
             return HttpResponse(
-                None,
-                408,
-                "Recursion limit of 10 exceeded")
+                status_code=408,
+                reason_message="Recursion limit of 10 exceeded")
 
         url_arr = url.split("/")
         base = url_arr[2]
@@ -47,32 +47,37 @@ class HttpHandler:
         response_raw = b''
         response = HttpResponse()
 
-        while content_length is None or body_length is None or body_length < content_length:
+        while body_length is None or (content_length is not None and body_length < content_length) or content_length is None:
             new_data = self.sock.recv(4096)
 
-            if new_data is None or new_data == '':
+            if new_data == b'':
                 break
 
-            response_raw += new_data
+            if (content_length is None and body_length is None) and HttpContentType.html.value.encode('ASCII') not in new_data:
+                return HttpResponse(status_code=400, reason_message="Content type is not text/html")
 
-            response.construct_from_string(response_raw.decode('ASCII'))
+            response_raw += new_data
+            response.construct_from_string(response_raw.decode('ASCII', errors="ignore"))
+
+            if response.content_type != HttpContentType.html:
+                return HttpResponse(status_code=400, reason_message="Content type is not text/html")
 
             content_length = response.content_length
             body_length = len(response_raw.split(b'\r\n\r\n')[1])
 
         self.sock.close()
         response = HttpResponse()
-        response.construct_from_string(response_raw.decode('ASCII'))
+        response.construct_from_string(response_raw.decode('ASCII', errors="ignore"))
 
         if response.status_code == 301 or response.status_code == 302:
             if response.location is None:
-                return HttpResponse(400, "Redirection failed, Location header not found")
-            print("Redirecting to: " + response.location)
+                return HttpResponse(status_code=400, reason_message="Redirection failed, Location header not found")
+            sys.stderr.write("Redirected to: " + response.location + '\n')
             return self.get(response.location, recursion_count=recursion_count + 1)
 
         if response.content_type is None:
-            return HttpResponse(400, "Content-Type header not found")
+            return HttpResponse(status_code=400, reason_message="Content-Type header not found")
         if response.content_type is not HttpContentType.html:
-            return HttpResponse(400, "Content type is not text/html")
+            return HttpResponse(status_code=400, reason_message="Content type is not text/html")
         return HttpResponse(status_code=response.status_code, reason_message=response.reason_message,
                             body=response.body)
