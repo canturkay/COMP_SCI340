@@ -98,14 +98,14 @@ class HttpServer:
                             200,
                             "OK",
                             HttpContentType.html,
-                            len(response_body.encode('ASCII')),
+                            len(response_body.encode('utf-8')),
                             datetime.datetime.utcnow(),
                             None,
                             None,
                             response_body
                         )
 
-                        conn.sendall(str(response).encode('ASCII'))
+                        conn.sendall(str(response).encode('utf-8'))
 
     @staticmethod
     def read_file(file_name: str) -> str:
