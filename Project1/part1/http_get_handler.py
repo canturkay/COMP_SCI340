@@ -33,7 +33,7 @@ class HttpHandler:
 
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((base, port))
-        self.sock.settimeout(5)
+        self.sock.settimeout(3)
 
         request = HttpRequest(
             http_method=HttpMethod.GET,
