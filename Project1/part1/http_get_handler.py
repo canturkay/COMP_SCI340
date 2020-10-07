@@ -33,6 +33,7 @@ class HttpHandler:
 
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((base, port))
+        self.sock.settimeout(5)
 
         request = HttpRequest(
             http_method=HttpMethod.GET,
@@ -47,13 +48,18 @@ class HttpHandler:
         response_raw = b''
         response = HttpResponse()
 
-        while body_length is None or (content_length is not None and body_length < content_length) or content_length is None:
-            new_data = self.sock.recv(4096)
+        while body_length is None or (content_length is not None and body_length < content_length) or \
+                content_length is None:
+            try:
+                new_data = self.sock.recv(4096)
+            except:
+                break
 
             if new_data == b'':
                 break
 
-            if (content_length is None and body_length is None) and HttpContentType.html.value.encode('ASCII') not in new_data:
+            if (content_length is None and body_length is None) and \
+                    HttpContentType.html.value.encode('ASCII') not in new_data:
                 return HttpResponse(status_code=400, reason_message="Content type is not text/html")
 
             response_raw += new_data
