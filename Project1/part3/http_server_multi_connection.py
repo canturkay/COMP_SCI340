@@ -13,6 +13,7 @@ class HttpServerMultiConnection:
     
     def open_connection(self, port: int):
         self.sock.bind(('', port))
+        self.sock.setblocking(False)
 
         self.sock.listen(10)
 
