@@ -69,15 +69,16 @@ class HttpHandler:
         response = HttpResponse()
         response.construct_from_string(response_raw.decode('ASCII', errors="ignore"))
 
+        if response.content_type is None:
+            return HttpResponse(status_code=400, reason_message="Content-Type header not found")
+        if response.content_type is not HttpContentType.html:
+            return HttpResponse(status_code=400, reason_message="Content type is not text/html")
+
         if response.status_code == 301 or response.status_code == 302:
             if response.location is None:
                 return HttpResponse(status_code=400, reason_message="Redirection failed, Location header not found")
             sys.stderr.write("Redirected to: " + response.location + '\n')
             return self.get(response.location, recursion_count=recursion_count + 1)
 
-        if response.content_type is None:
-            return HttpResponse(status_code=400, reason_message="Content-Type header not found")
-        if response.content_type is not HttpContentType.html:
-            return HttpResponse(status_code=400, reason_message="Content type is not text/html")
         return HttpResponse(status_code=response.status_code, reason_message=response.reason_message,
                             body=response.body)
