@@ -122,12 +122,15 @@ class DynamicWebServer:
                                     parsed_num = float("-inf")
                                 else:
                                     parsed_num = float(num)
-                                print(parsed_num)
-                                operands.append(int(parsed_num) if int(parsed_num) == parsed_num else parsed_num)
-                                result *= parsed_num
                             except:
                                 all_nums = False
                                 break
+                            if all_nums:
+                                try:
+                                    operands.append(int(parsed_num) if int(parsed_num) == parsed_num else parsed_num)
+                                except:
+                                    operands.append(parsed_num)
+                                result *= parsed_num
                         else:
                             all_nums = False
 
