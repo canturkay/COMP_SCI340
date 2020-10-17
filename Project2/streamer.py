@@ -56,7 +56,7 @@ class Streamer:
             self.receive_buffer.sort(key=self.sort_func)
 
         curr = self.receive_buffer.pop(0)
-        self.last_sequence_number = curr.sequence_number
+        self.last_sequence_number += 1
         print(curr.data_bytes)
         print(self.last_sequence_number)
 
