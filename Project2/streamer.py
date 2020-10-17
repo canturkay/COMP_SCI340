@@ -10,6 +10,8 @@ from TCPPacket import TCPPacket
 class Streamer:
     last_sequence_number = 0
 
+    receive_buffer = []
+
     def __init__(self, dst_ip, dst_port,
                  src_ip=INADDR_ANY, src_port=0):
         """Default values listen on all network interfaces, chooses a random source port,
@@ -29,9 +31,10 @@ class Streamer:
             chunk_end_index = min(len(data_bytes), (chunk_index + 1) * chunk_size)
 
             packet = TCPPacket()
-            res = packet.pack(chunk_index, data_bytes[chunk_start_index:chunk_end_index])
+            res = packet.pack(self.last_sequence_number, data_bytes[chunk_start_index:chunk_end_index])
+            self.last_sequence_number += 1
             packet.unpack(res)
-            
+
             self.socket.sendto(res,
                                (self.dst_ip, self.dst_port))
             chunk_index += 1
@@ -42,15 +45,25 @@ class Streamer:
 
     def recv(self) -> bytes:
         """Blocks (waits) if no data is ready to be read from the connection."""
-        # your code goes here!  The code below should be changed!
-        
-        # this sample code just calls the recvfrom method on the LossySocket
-        data, addr = self.socket.recvfrom()
-        # For now, I'll just pass the full UDP payload to the app
-        packet = TCPPacket()
-        packet.unpack(data)
 
-        return packet.data_bytes
+        while len(self.receive_buffer) == 0 or \
+                self.receive_buffer[0].sequence_number > self.last_sequence_number + 1:
+            data, addr = self.socket.recvfrom()
+            packet = TCPPacket()
+            packet.unpack(data)
+
+            self.receive_buffer.append(packet)
+            self.receive_buffer.sort(key=self.sort_func)
+
+        curr = self.receive_buffer.pop(0)
+        self.last_sequence_number = curr.sequence_number
+        print(curr.data_bytes)
+        print(self.last_sequence_number)
+
+        return curr.data_bytes
+
+    @staticmethod
+    def sort_func(e: TCPPacket): return e.sequence_number
 
     def close(self) -> None:
         """Cleans up. It should block (wait) until the Streamer is done with all
