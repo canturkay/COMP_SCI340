@@ -20,6 +20,7 @@ class Streamer:
     chunk_size = 16
 
     remote_closed = False
+    
 
     def __init__(self, dst_ip, dst_port,
                  src_ip=INADDR_ANY, src_port=0):
@@ -53,6 +54,7 @@ class Streamer:
                                   data_bytes=data_bytes[chunk_start_index:chunk_end_index])
 
                 if time.time() - packet_sent >= 0.25:
+                    print("TIMEOUT")
                     self.socket.sendto(res,
                                        (self.dst_ip, self.dst_port))
                     packet_sent = time.time()
@@ -105,7 +107,9 @@ class Streamer:
                         self.ack_buffer[packet.acknowledgement_number] = True
                     elif packet.flags[5]:
                         print("FIN RECEIVED")
+                        self.fin_ack_sent = time.time()
                         self.send_ack(acknowledgement_number=packet.sequence_number)
+
                         self.remote_closed = True
                     else:
                         calculated_checksum = packet.get_checksum(data[16:])
@@ -113,8 +117,6 @@ class Streamer:
                             self.send_ack(packet.sequence_number)
                             if packet.sequence_number not in self.receive_buffer:
                                 self.receive_buffer[packet.sequence_number] = packet
-                        else:
-                            print(calculated_checksum, packet.checksum)
                 else:
                     self.closed = True
             except Exception as e:
@@ -133,16 +135,25 @@ class Streamer:
         fin_sent = time.time()
         self.ack_buffer[fin_sequence_number] = False
 
-        while not self.ack_buffer[fin_sequence_number]:
-            if time.time() - fin_sent >= 0.25:
-                self.send_fin(sequence_number=fin_sequence_number)
-                fin_sent = time.time()
-            time.sleep(.01)
+        if self.remote_closed:
+            while not self.ack_buffer[fin_sequence_number]:
+                if time.time() - fin_sent >= 0.25:
+                    self.send_fin(sequence_number=fin_sequence_number)
+                    fin_sent = time.time()
+                time.sleep(.01)
 
-        del self.ack_buffer[fin_sequence_number]
+            del self.ack_buffer[fin_sequence_number]
+        else:
+            while not self.ack_buffer[fin_sequence_number]:
+                if time.time() - fin_sent >= 0.25:
+                    self.send_fin(sequence_number=fin_sequence_number)
+                    fin_sent = time.time()
+                time.sleep(.01)
 
-        while not self.remote_closed:
-            pass
+            del self.ack_buffer[fin_sequence_number]
+
+            while not self.remote_closed:
+                pass
 
         self.closed = True
         self.socket.stoprecv()
