@@ -17,7 +17,9 @@ class Streamer:
     closed = None
     executor = None
     thread = None
-    chunk_size = 128
+    chunk_size = 16
+
+    remote_closed = False
 
     def __init__(self, dst_ip, dst_port,
                  src_ip=INADDR_ANY, src_port=0):
@@ -43,13 +45,17 @@ class Streamer:
             last_sequence_number = self.last_sequence_number
             self.ack_buffer[last_sequence_number] = False
 
+            packet_sent = time.time()
+
             while not self.ack_buffer[last_sequence_number]:
                 packet = TCPPacket()
                 res = packet.pack(sequence_number=last_sequence_number,
                                   data_bytes=data_bytes[chunk_start_index:chunk_end_index])
 
-                self.socket.sendto(res,
-                                   (self.dst_ip, self.dst_port))
+                if time.time() - packet_sent >= 0.25:
+                    self.socket.sendto(res,
+                                       (self.dst_ip, self.dst_port))
+                    packet_sent = time.time()
                 time.sleep(.01)
 
             del self.ack_buffer[last_sequence_number]
@@ -57,9 +63,14 @@ class Streamer:
 
             chunk_index += 1
 
-    def ack(self, acknowledgement_number: int):
+    def send_ack(self, acknowledgement_number: int):
         packet = TCPPacket()
         res = packet.pack(acknowledgement_number=acknowledgement_number, ack=True)
+        self.socket.sendto(res, (self.dst_ip, self.dst_port))
+
+    def send_fin(self, sequence_number: int):
+        packet = TCPPacket()
+        res = packet.pack(fin=True, sequence_number=sequence_number)
         self.socket.sendto(res, (self.dst_ip, self.dst_port))
 
     def recv(self) -> bytes:
@@ -73,6 +84,7 @@ class Streamer:
 
         # curr = self.receive_buffer.pop(0)
         curr = self.receive_buffer[self.last_sequence_number]
+        del self.receive_buffer[self.last_sequence_number]
         self.last_sequence_number += 1
 
         return curr.data_bytes
@@ -91,10 +103,18 @@ class Streamer:
 
                     if packet.flags[1]:
                         self.ack_buffer[packet.acknowledgement_number] = True
+                    elif packet.flags[5]:
+                        print("FIN RECEIVED")
+                        self.send_ack(acknowledgement_number=packet.sequence_number)
+                        self.remote_closed = True
                     else:
-                        self.ack(packet.sequence_number)
-                        if packet.sequence_number not in self.receive_buffer:
-                            self.receive_buffer[packet.sequence_number] = packet
+                        calculated_checksum = packet.get_checksum(data[16:])
+                        if calculated_checksum == packet.checksum:
+                            self.send_ack(packet.sequence_number)
+                            if packet.sequence_number not in self.receive_buffer:
+                                self.receive_buffer[packet.sequence_number] = packet
+                        else:
+                            print(calculated_checksum, packet.checksum)
                 else:
                     self.closed = True
             except Exception as e:
@@ -106,6 +126,24 @@ class Streamer:
     def close(self) -> None:
         """Cleans up. It should block (wait) until the Streamer is done with all
            the necessary ACKs and retransmissions"""
+
+        fin_sequence_number = self.last_sequence_number
+        self.last_sequence_number += 1
+
+        fin_sent = time.time()
+        self.ack_buffer[fin_sequence_number] = False
+
+        while not self.ack_buffer[fin_sequence_number]:
+            if time.time() - fin_sent >= 0.25:
+                self.send_fin(sequence_number=fin_sequence_number)
+                fin_sent = time.time()
+            time.sleep(.01)
+
+        del self.ack_buffer[fin_sequence_number]
+
+        while not self.remote_closed:
+            pass
+
         self.closed = True
         self.socket.stoprecv()
 
