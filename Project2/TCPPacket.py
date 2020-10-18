@@ -43,7 +43,7 @@ class TCPPacket:
             b'1' if reset else b'0') + (b'1' if syn else b'0') + (b'1' if fin else b'0')
 
     def unpack_flags(self, flag_bytes: bytes) -> None:
-        self.flags = [True if flag == b'1' else False for flag in flag_bytes]
+        self.flags = [True if flag == 49 else False for flag in flag_bytes]
 
     def __str__(self):
         return str(self.sequence_number) + " | " + str(self.acknowledgement_number) + '\n' + self.data_bytes.decode(

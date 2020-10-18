@@ -17,7 +17,7 @@ class Streamer:
     closed = None
     executor = None
     thread = None
-    chunk_size = 1024
+    chunk_size = 128
 
     def __init__(self, dst_ip, dst_port,
                  src_ip=INADDR_ANY, src_port=0):
@@ -44,8 +44,6 @@ class Streamer:
             self.ack_buffer[last_sequence_number] = False
 
             while not self.ack_buffer[last_sequence_number]:
-                print(self.ack_buffer)
-                print([self.receive_buffer[a].flags for a in self.receive_buffer])
                 packet = TCPPacket()
                 res = packet.pack(sequence_number=last_sequence_number,
                                   data_bytes=data_bytes[chunk_start_index:chunk_end_index])
@@ -62,7 +60,6 @@ class Streamer:
     def ack(self, acknowledgement_number: int):
         packet = TCPPacket()
         res = packet.pack(acknowledgement_number=acknowledgement_number, ack=True)
-        print("WOOO:", packet.flags)
         self.socket.sendto(res, (self.dst_ip, self.dst_port))
 
     def recv(self) -> bytes:
@@ -93,19 +90,17 @@ class Streamer:
                     packet.unpack(data)
 
                     if packet.flags[1]:
-                        print("ACK", packet.acknowledgement_number)
                         self.ack_buffer[packet.acknowledgement_number] = True
                     else:
-                        print("DATA", packet.sequence_number)
                         self.ack(packet.sequence_number)
                         if packet.sequence_number not in self.receive_buffer:
                             self.receive_buffer[packet.sequence_number] = packet
-                        # self.receive_buffer.sort(key=self.sort_packets)
                 else:
                     self.closed = True
             except Exception as e:
                 print("listener died!")
                 print(e)
+                self.closed = True
         return True
 
     def close(self) -> None:

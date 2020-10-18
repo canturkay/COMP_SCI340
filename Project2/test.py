@@ -3,7 +3,7 @@ import sys
 import lossy_socket
 from streamer import Streamer
 
-NUMS = 1000
+NUMS = 200
 
 
 def receive(s):
