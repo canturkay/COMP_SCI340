@@ -20,7 +20,7 @@ class Streamer:
     chunk_size = 16
 
     remote_closed = False
-    
+
 
     def __init__(self, dst_ip, dst_port,
                  src_ip=INADDR_ANY, src_port=0):
