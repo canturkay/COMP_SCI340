@@ -83,7 +83,7 @@ def main():
         host2(port2, port1)
     else:
         print("Unexpected last argument: " + sys.argv[2])
-    print("TIME ELAPSED: ", time.time() - start_time, "secs")
+    print("TIME ELAPSED=%d" % (time.time() - start_time), "secs")
 
 
 if __name__ == "__main__":
