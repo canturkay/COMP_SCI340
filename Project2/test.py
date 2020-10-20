@@ -4,7 +4,7 @@ import time
 import lossy_socket
 from streamer import Streamer
 
-NUMS = 20
+NUMS = 1000
 
 
 def receive(s):
@@ -66,8 +66,8 @@ def host2(listen_port, remote_port):
 
 def main():
     start_time = time.time()
-    lossy_socket.sim = lossy_socket.SimulationParams(loss_rate=0.7, corruption_rate=0.7,
-                                                     max_delivery_delay=0.7,
+    lossy_socket.sim = lossy_socket.SimulationParams(loss_rate=0.1, corruption_rate=0.1,
+                                                     max_delivery_delay=0.1,
                                                      become_reliable_after=100000000.0)
 
     if len(sys.argv) < 4:
