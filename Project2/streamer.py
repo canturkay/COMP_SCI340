@@ -9,21 +9,31 @@ from lossy_socket import LossyUDP
 
 
 class Streamer:
-
-    last_sequence_number = 0
+    send_sequence_number = 0
+    receive_sequence_number = 0
 
     receive_buffer = {}
-    ack_buffer = {}
+    send_buffer = {}
 
     self_half_closed = False
-    closed = None
-    executor = None
-    thread = None
-    chunk_size = 16
-
     remote_closed = False
+    closed = False
+
+    executor = None
+    recv_thread = None
+    send_thread = None
 
     last_fin_ack_sent = None
+
+    chunk_size = 1024
+    time_out_seconds = 0.25
+    fin_grace_period = 2
+    default_wait_seconds = 0.001
+
+    _alpha = 0.125
+    _beta = 0.05
+    DevRTT = 0.02
+    EstimatedRTT = 0.15
 
     def __init__(self, dst_ip, dst_port,
                  src_ip=INADDR_ANY, src_port=0):
@@ -34,9 +44,9 @@ class Streamer:
         self.dst_ip = dst_ip
         self.dst_port = dst_port
 
-        self.closed = False
-        self.executor = ThreadPoolExecutor(max_workers=1)
-        self.thread = self.executor.submit(self.recv_async)
+        self.executor = ThreadPoolExecutor(max_workers=2)
+        self.recv_thread = self.executor.submit(self.recv_async)
+        self.send_thread = self.executor.submit(self.send_async)
 
     def send(self, data_bytes: bytes) -> None:
         """Note that data_bytes can be larger than one packet."""
@@ -46,66 +56,57 @@ class Streamer:
             chunk_start_index = chunk_index * self.chunk_size
             chunk_end_index = min(len(data_bytes), (chunk_index + 1) * self.chunk_size)
 
-            last_sequence_number = self.last_sequence_number
-            self.ack_buffer[last_sequence_number] = False
+            packet = TCPPacket(sequence_number=self.send_sequence_number,
+                               data_bytes=data_bytes[chunk_start_index:chunk_end_index])
+            self.send_buffer[self.send_sequence_number] = (packet, 0)
 
-            packet_sent = time.time()
-
-            while not self.ack_buffer[last_sequence_number]:
-                packet = TCPPacket()
-                res = packet.pack(sequence_number=last_sequence_number,
-                                  data_bytes=data_bytes[chunk_start_index:chunk_end_index])
-
-                if time.time() - packet_sent >= 0.25:
-                    # print("TIMEOUT")
-                    self.socket.sendto(res,
-                                       (self.dst_ip, self.dst_port))
-                    packet_sent = time.time()
-                time.sleep(.01)
-
-            del self.ack_buffer[last_sequence_number]
-            self.last_sequence_number += 1
-
+            self.send_sequence_number += 1
             chunk_index += 1
 
     def send_ack(self, acknowledgement_number: int):
-        packet = TCPPacket()
-        res = packet.pack(acknowledgement_number=acknowledgement_number, ack=True)
-        self.socket.sendto(res, (self.dst_ip, self.dst_port))
+        packet = TCPPacket(acknowledgement_number=acknowledgement_number, ack=True)
+        self.socket.sendto(packet.pack(), (self.dst_ip, self.dst_port))
 
     def send_fin(self, sequence_number: int):
-        packet = TCPPacket()
-        res = packet.pack(fin=True, sequence_number=sequence_number)
-        self.socket.sendto(res, (self.dst_ip, self.dst_port))
+        packet = TCPPacket(fin=True, sequence_number=sequence_number)
+        self.send_buffer[packet.sequence_number] = (packet, time.time())
 
     def recv(self) -> bytes:
         """Blocks (waits) if no data is ready to be read from the connection."""
 
-        # while len(self.receive_buffer) == 0 or \
-        #         self.receive_buffer[0].sequence_number > self.last_sequence_number:
-        while len(self.receive_buffer) == 0 or \
-                self.last_sequence_number not in self.receive_buffer:
-            time.sleep(.01)
+        while self.receive_sequence_number not in self.receive_buffer:
+            time.sleep(self.default_wait_seconds)
 
         # curr = self.receive_buffer.pop(0)
-        curr = self.receive_buffer[self.last_sequence_number]
-        del self.receive_buffer[self.last_sequence_number]
-        self.last_sequence_number += 1
+        curr = self.receive_buffer[self.receive_sequence_number]
+        del self.receive_buffer[self.receive_sequence_number]
+        self.receive_sequence_number += 1
 
         return curr.data_bytes
 
-    # @staticmethod
-    # def sort_packets(e: TCPPacket):
-    #     return e.sequence_number
+    def send_async(self):
+        while not self.self_half_closed:
+            try:
+                copy_send_buffer = self.send_buffer.copy()
+                for val in copy_send_buffer:
+                    if isinstance(self.send_buffer[val], tuple):
+                        packet, time_sent = self.send_buffer[val]
+                        if time_sent is not None:
+                            if time.time() - time_sent > self.time_out_seconds:
+                                self.socket.sendto(packet.pack(),
+                                                   (self.dst_ip, self.dst_port))
+                                self.send_buffer[packet.sequence_number] = (packet, time.time())
+                        else:
+                            del self.send_buffer[packet.sequence_number]
+                        pass
+            except Exception as e:
+                # print("Sender died!")
+                print(e)
+            time.sleep(self.default_wait_seconds)
+        return True
 
     def recv_async(self):
         while not self.closed:
-            if self.last_fin_ack_sent is not None:
-                if time.time() - self.last_fin_ack_sent > 2:
-                    # print("FIN COMPLETE")
-                    self.remote_closed = True
-                else:
-                    time.sleep(.01)
             try:
                 data, addr = self.socket.recvfrom()
                 if data is not None and data != b'':
@@ -114,15 +115,18 @@ class Streamer:
 
                     calculated_checksum = packet.get_checksum(data[16:])
                     if calculated_checksum == packet.checksum:
-                        if packet.flags[1]:
-                            self.ack_buffer[packet.acknowledgement_number] = True
-                        elif packet.flags[5]:
-                            # print("FIN RECEIVED", time.time())
+                        if packet.ack:
+                            ack_packet = TCPPacket(sequence_number=packet.acknowledgement_number)
+                            if packet.acknowledgement_number % 20 == 0:
+                                self.calculate_new_timeout(time.time() - self.send_buffer[packet.acknowledgement_number][1])
+                            self.send_buffer[packet.acknowledgement_number] = (ack_packet, None)
+                        elif packet.fin:
+                            print("FIN RECEIVED", time.time())
                             self.send_ack(acknowledgement_number=packet.sequence_number)
                             self.last_fin_ack_sent = time.time()
-                            if not self.self_half_closed:
-                                # print("REMOTE CLOSED")
-                                self.remote_closed = True
+                            # if not self.self_half_closed:
+                            #     # print("REMOTE CLOSED")
+                            #     self.remote_closed = True
                         else:
                             self.send_ack(acknowledgement_number=packet.sequence_number)
                             if packet.sequence_number not in self.receive_buffer:
@@ -138,37 +142,46 @@ class Streamer:
         """Cleans up. It should block (wait) until the Streamer is done with all
            the necessary ACKs and retransmissions"""
 
-        fin_sequence_number = self.last_sequence_number
-        self.last_sequence_number += 1
+        while len(self.send_buffer) > 0:
+            # print(self.send_buffer)
+            time.sleep(self.default_wait_seconds)
 
-        fin_sent = time.time()
-        self.ack_buffer[fin_sequence_number] = False
+        print("SENDING FIN")
 
-        while not self.ack_buffer[fin_sequence_number]:
-            if time.time() - fin_sent >= 0.25:
-                # print("SENDING FIN", time.time())
-                self.send_fin(sequence_number=fin_sequence_number)
-                fin_sent = time.time()
-            time.sleep(.01)
+        self.send_fin(sequence_number=self.send_sequence_number)
+        self.send_sequence_number += 1
 
-        print("FIN ACCEPTED")
+        while len(self.send_buffer) > 0:
+            time.sleep(self.default_wait_seconds)
 
-        del self.ack_buffer[fin_sequence_number]
+        print("FIN ACCEPTED", self.remote_closed)
+        self.self_half_closed = True
 
-        if not self.remote_closed:
-            # print("SELF HALF CLOSED")
-            self.self_half_closed = True
-
-            while not self.remote_closed:
-                # print("waiting for remote close")
-                time.sleep(.01)
+        while not self.remote_closed:
+            if self.last_fin_ack_sent is not None:
+                if time.time() - self.last_fin_ack_sent > self.fin_grace_period:
+                    print("FIN COMPLETE")
+                    self.remote_closed = True
+                else:
+                    time.sleep(self.default_wait_seconds)
 
         self.closed = True
         self.socket.stoprecv()
 
-        while not self.thread.done():
-            self.thread.cancel()
+        while not self.send_thread.done():
+            self.send_thread.cancel()
+            time.sleep(self.default_wait_seconds)
+
+        while not self.recv_thread.done():
+            self.recv_thread.cancel()
+            time.sleep(self.default_wait_seconds)
 
         self.executor.shutdown()
         # your code goes here, especially after you add ACKs and retransmissions.
         pass
+
+    def calculate_new_timeout(self, sample_rtt: float):
+        self.EstimatedRTT = (1-self._alpha) * self.EstimatedRTT + self._alpha * sample_rtt
+        self.DevRTT = (1-self._beta)*self.DevRTT + self._beta * abs(sample_rtt - self.EstimatedRTT)
+        self.time_out_seconds = self.EstimatedRTT + self.DevRTT * 4
+        print(self.time_out_seconds)

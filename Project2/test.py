@@ -1,10 +1,10 @@
 import sys
+import time
 
 import lossy_socket
 from streamer import Streamer
 
-NUMS = 20
-
+NUMS = 1000
 
 def receive(s):
     expected = 0
@@ -64,6 +64,7 @@ def host2(listen_port, remote_port):
 
 
 def main():
+    start_time = time.time()
     lossy_socket.sim = lossy_socket.SimulationParams(loss_rate=0.1, corruption_rate=0.1,
                                                      max_delivery_delay=0.1,
                                                      become_reliable_after=100000000.0)
@@ -81,6 +82,7 @@ def main():
         host2(port2, port1)
     else:
         print("Unexpected last argument: " + sys.argv[2])
+    print("TIME ELAPSED: ", time.time() - start_time, "secs")
 
 
 if __name__ == "__main__":
