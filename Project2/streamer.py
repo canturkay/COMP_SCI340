@@ -25,7 +25,7 @@ class Streamer:
 
     last_fin_ack_sent = None
 
-    chunk_size = 1446
+    chunk_size = 2
     time_out_seconds = 0.25
     fin_grace_period = 2
     default_wait_seconds = 0.001
