@@ -6,6 +6,7 @@ from streamer import Streamer
 
 NUMS = 1000
 
+
 def receive(s):
     expected = 0
     str_buf = ""

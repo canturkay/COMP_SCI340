@@ -25,7 +25,7 @@ class Streamer:
 
     last_fin_ack_sent = None
 
-    chunk_size = 1024
+    chunk_size = 1472
     time_out_seconds = 0.25
     fin_grace_period = 2
     default_wait_seconds = 0.001
@@ -184,4 +184,4 @@ class Streamer:
         self.EstimatedRTT = (1-self._alpha) * self.EstimatedRTT + self._alpha * sample_rtt
         self.DevRTT = (1-self._beta)*self.DevRTT + self._beta * abs(sample_rtt - self.EstimatedRTT)
         self.time_out_seconds = self.EstimatedRTT + self.DevRTT * 4
-        print(self.time_out_seconds)
+        # print(self.time_out_seconds)
