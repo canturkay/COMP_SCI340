@@ -35,6 +35,8 @@ class Streamer:
     DevRTT = 0.02
     EstimatedRTT = 0.15
 
+    window_size = 1000
+
     def __init__(self, dst_ip, dst_port,
                  src_ip=INADDR_ANY, src_port=0):
         """Default values listen on all network interfaces, chooses a random source port,
@@ -58,6 +60,10 @@ class Streamer:
 
             packet = TCPPacket(sequence_number=self.send_sequence_number,
                                data_bytes=data_bytes[chunk_start_index:chunk_end_index])
+
+            while len(self.send_buffer) > self.window_size:
+                time.sleep(self.default_wait_seconds)
+
             self.send_buffer[self.send_sequence_number] = (packet, 0)
 
             self.send_sequence_number += 1
