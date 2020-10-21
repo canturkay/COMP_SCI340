@@ -30,12 +30,9 @@ class Streamer:
     fin_grace_period = 2
     default_wait_seconds = 0.001
 
-    _alpha = 0.125
-    _beta = 0.05
-    DevRTT = 0.02
+    _alpha = 0.1
+    DevRTT = 0.01
     EstimatedRTT = 0.15
-
-    window_size = 1000
 
     def __init__(self, dst_ip, dst_port,
                  src_ip=INADDR_ANY, src_port=0):
@@ -60,10 +57,7 @@ class Streamer:
 
             packet = TCPPacket(sequence_number=self.send_sequence_number,
                                data_bytes=data_bytes[chunk_start_index:chunk_end_index])
-
-            while len(self.send_buffer) > self.window_size:
-                time.sleep(self.default_wait_seconds)
-
+            
             self.send_buffer[self.send_sequence_number] = (packet, 0)
 
             self.send_sequence_number += 1
@@ -188,6 +182,5 @@ class Streamer:
 
     def calculate_new_timeout(self, sample_rtt: float):
         self.EstimatedRTT = (1-self._alpha) * self.EstimatedRTT + self._alpha * sample_rtt
-        self.DevRTT = (1-self._beta)*self.DevRTT + self._beta * abs(sample_rtt - self.EstimatedRTT)
         self.time_out_seconds = self.EstimatedRTT + self.DevRTT * 4
         # print(self.time_out_seconds)
