@@ -4,7 +4,7 @@ import time
 import lossy_socket
 from streamer import Streamer
 
-NUMS = 1000
+NUMS = 10000
 
 
 def receive(s):
