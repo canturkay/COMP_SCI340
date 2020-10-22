@@ -1,8 +1,8 @@
 import hashlib
 import struct
 
-len_sequence_number = 4
-len_flags = 2
+len_sequence_number = 2
+len_flags = 1
 len_checksum = 16
 
 
@@ -15,11 +15,19 @@ class TCPPacket:
     fin = None
 
     def unpack(self, packet) -> None:
-        packing_format = '16sI??' + str(
+        packing_format = '16sHc' + str(
             len(packet) - len_sequence_number - len_flags - len_checksum) + 's'
-        self.checksum, self.sequence_number, self.ack, self.fin, self.data_bytes = struct.unpack(
+
+        self.checksum, self.sequence_number, flags, self.data_bytes = struct.unpack(
             packing_format,
             packet)
+
+        self.ack = False
+        self.fin = False
+        if flags == b'1':
+            self.ack = True
+        elif flags == b'2':
+            self.fin = True
 
     def __init__(self, sequence_number: int = 0, ack: bool = False,
                  fin: bool = False, data_bytes: bytes = b''):
@@ -31,10 +39,12 @@ class TCPPacket:
         self.fin = fin
 
     def pack(self) -> bytes:
-        packing_format = 'I??' + str(len(self.data_bytes)) + 's'
+        packing_format = 'Hc' + str(len(self.d  ata_bytes)) + 's'
+
+        flags = b'1' if self.ack else (b'2' if self.fin else b'0')
 
         packet = struct.pack(packing_format, self.sequence_number,
-                             self.ack, self.fin,
+                             flags,
                              self.data_bytes)
 
         self.checksum = self.get_checksum(packet)
