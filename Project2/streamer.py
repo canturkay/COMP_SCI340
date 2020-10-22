@@ -122,13 +122,13 @@ class Streamer:
                             self.send_buffer[packet.sequence_number] = (ack_packet, None)
                         elif packet.fin:
                             print("FIN RECEIVED", time.time())
-                            self.send_ack(sequence_number=packet.sequence_number)
+                            self.send_ack(acknowledgement_number=packet.sequence_number)
                             self.last_fin_ack_sent = time.time()
                             # if not self.self_half_closed:
                             #     # print("REMOTE CLOSED")
                             #     self.remote_closed = True
                         else:
-                            self.send_ack(sequence_number=packet.sequence_number)
+                            self.send_ack(acknowledgement_number=packet.sequence_number)
                             if packet.sequence_number not in self.receive_buffer:
                                 self.receive_buffer[packet.sequence_number] = packet
             except Exception as e:
