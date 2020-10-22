@@ -64,7 +64,7 @@ class Streamer:
             chunk_index += 1
 
     def send_ack(self, acknowledgement_number: int):
-        packet = TCPPacket(acknowledgement_number=acknowledgement_number, ack=True)
+        packet = TCPPacket(sequence_number=acknowledgement_number, ack=True)
         self.socket.sendto(packet.pack(), (self.dst_ip, self.dst_port))
 
     def send_fin(self, sequence_number: int):
@@ -116,19 +116,19 @@ class Streamer:
                     calculated_checksum = packet.get_checksum(data[16:])
                     if calculated_checksum == packet.checksum:
                         if packet.ack:
-                            ack_packet = TCPPacket(sequence_number=packet.acknowledgement_number)
-                            if packet.acknowledgement_number % 20 == 0:
-                                self.calculate_new_timeout(time.time() - self.send_buffer[packet.acknowledgement_number][1])
-                            self.send_buffer[packet.acknowledgement_number] = (ack_packet, None)
+                            ack_packet = TCPPacket(sequence_number=packet.sequence_number)
+                            if packet.sequence_number % 20 == 0:
+                                self.calculate_new_timeout(time.time() - self.send_buffer[packet.sequence_number][1])
+                            self.send_buffer[packet.sequence_number] = (ack_packet, None)
                         elif packet.fin:
                             print("FIN RECEIVED", time.time())
-                            self.send_ack(acknowledgement_number=packet.sequence_number)
+                            self.send_ack(sequence_number=packet.sequence_number)
                             self.last_fin_ack_sent = time.time()
                             # if not self.self_half_closed:
                             #     # print("REMOTE CLOSED")
                             #     self.remote_closed = True
                         else:
-                            self.send_ack(acknowledgement_number=packet.sequence_number)
+                            self.send_ack(sequence_number=packet.sequence_number)
                             if packet.sequence_number not in self.receive_buffer:
                                 self.receive_buffer[packet.sequence_number] = packet
             except Exception as e:
