@@ -20,6 +20,7 @@ class SimulationParams:
     def forced_reliable(self) -> bool:
         return time() - self.start_time > self.become_reliable_after
 
+
 class SimulationStats:
     def __init__(self):
         self.packets_sent = 0

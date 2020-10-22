@@ -57,7 +57,7 @@ class Streamer:
 
             packet = TCPPacket(sequence_number=self.send_sequence_number,
                                data_bytes=data_bytes[chunk_start_index:chunk_end_index])
-            
+
             self.send_buffer[self.send_sequence_number] = (packet, 0)
 
             self.send_sequence_number += 1
