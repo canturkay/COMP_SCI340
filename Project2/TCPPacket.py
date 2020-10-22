@@ -39,7 +39,7 @@ class TCPPacket:
         self.fin = fin
 
     def pack(self) -> bytes:
-        packing_format = 'Hc' + str(len(self.d  ata_bytes)) + 's'
+        packing_format = 'Hc' + str(len(self.data_bytes)) + 's'
 
         flags = b'1' if self.ack else (b'2' if self.fin else b'0')
 
