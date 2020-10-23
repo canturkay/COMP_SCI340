@@ -1,8 +1,6 @@
-import sys
-import time
-
-import lossy_socket
 from streamer import Streamer
+import sys
+import lossy_socket
 
 NUMS = 10000
 
@@ -19,7 +17,7 @@ def receive(s):
                 # there could be a "" at the start or the end, if a space is there
                 continue
             if int(t) == expected:
-                # print("got %d!" % expected)
+                print("got %d!" % expected)
                 expected += 1
                 str_buf = ''
             elif int(t) > expected:
@@ -43,7 +41,7 @@ def host1(listen_port, remote_port):
     while i < NUMS:
         buf += ("%d " % i)
         if len(buf) > 12345 or i == NUMS - 1:
-            # print("sending {%s}" % buf)
+            print("sending {%s}" % buf)
             s.send(buf.encode('utf-8'))
             buf = ""
         i += 1
@@ -57,7 +55,7 @@ def host2(listen_port, remote_port):
     # send small pieces of data
     for i in range(NUMS):
         buf = ("%d " % i)
-        # print("sending {%s}" % buf)
+        print("sending {%s}" % buf)
         s.send(buf.encode('utf-8'))
     receive(s)
     s.close()
@@ -65,10 +63,9 @@ def host2(listen_port, remote_port):
 
 
 def main():
-    start_time = time.time()
-    lossy_socket.sim = lossy_socket.SimulationParams(loss_rate=0.1, corruption_rate=0.1,
-                                                     max_delivery_delay=0.1,
-                                                     become_reliable_after=100000000.0)
+    lossy_socket.sim = lossy_socket.SimulationParams(loss_rate=0.0, corruption_rate=0.0,
+                                                     max_delivery_delay=0.0,
+                                                     become_reliable_after=100000.0)
 
     if len(sys.argv) < 4:
         print("usage is: python3 test.py [port1] [port2] [1|2]")
@@ -83,7 +80,6 @@ def main():
         host2(port2, port1)
     else:
         print("Unexpected last argument: " + sys.argv[2])
-    print("TIME ELAPSED=%f" % (time.time() - start_time), "secs")
 
 
 if __name__ == "__main__":

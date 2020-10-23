@@ -5,7 +5,7 @@ from time import sleep, time
 from typing import Tuple
 
 # constant seed makes the random number generator deterministic during testing
-# random.seed(398120)
+random.seed(398120)
 
 
 class SimulationParams:
@@ -19,7 +19,6 @@ class SimulationParams:
 
     def forced_reliable(self) -> bool:
         return time() - self.start_time > self.become_reliable_after
-
 
 class SimulationStats:
     def __init__(self):
@@ -68,8 +67,7 @@ class LossyUDP(socket):
         sleep(0.01)
         if random.random() < sim.loss_rate and not sim.forced_reliable():
             # drop the packet
-            # print("outgoing UDP packet was dropped by the simulator.")
-            pass
+            print("outgoing UDP packet was dropped by the simulator.")
         else:
             if not sim.forced_reliable():
                 # flip an arbitrary number of bits in the packet:
@@ -85,11 +83,10 @@ class LossyUDP(socket):
                         msg_array = bytearray(message)
                         msg_array[int(bit_to_flip / 8)] = flipped_byte
                         message = bytes(msg_array)
-                        # print("outgoing UDP packet's bit number %d was flipped by the simulator."
-                        #       % bit_to_flip)
+                        print("outgoing UDP packet's bit number %d was flipped by the simulator."
+                              % bit_to_flip)
                 if bits_flipped > 0:
-                    # print("total of %d bits flipped in the packet" % bits_flipped)
-                    pass
+                    print("total of %d bits flipped in the packet" % bits_flipped)
             # send message after a random delay.  The randomness will reorder packets
             Timer(0 if sim.forced_reliable() else random.random() * sim.max_delivery_delay,
                   lambda: super(self.__class__, self).sendto(message, dst)).start()
