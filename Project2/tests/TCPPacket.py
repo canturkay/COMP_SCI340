@@ -57,7 +57,7 @@ class TCPPacket:
 
     def __str__(self):
         return str(self.sequence_number) + '\n' + self.data_bytes.decode(
-                'utf-8')
+            'utf-8')
 
     def __eq__(self, other):
         return self.checksum == other.checksum

@@ -1,11 +1,13 @@
 # do not import anything else from loss_socket besides LossyUDP
 # do not import anything else from socket except INADDR_ANY
+import sys
 import time
+import traceback
 from concurrent.futures import ThreadPoolExecutor
 from socket import INADDR_ANY
 
-from TCPPacket import TCPPacket
-from lossy_socket import LossyUDP
+from tests.TCPPacket import TCPPacket
+from tests.lossy_socket import LossyUDP
 
 
 class Streamer:
@@ -101,9 +103,8 @@ class Streamer:
                             del self.send_buffer[packet.sequence_number]
                         pass
             except Exception as ex:
-                pass
-                # print("Sender died")
-                # traceback.print_exc(file=sys.stdout)
+                print("Sender died")
+                traceback.print_exc(file=sys.stdout)
             time.sleep(self.default_wait_seconds)
         return True
 
@@ -119,12 +120,13 @@ class Streamer:
                     if calculated_checksum == packet.checksum:
                         if packet.ack:
                             ack_packet = TCPPacket(sequence_number=packet.sequence_number)
-                            if packet.sequence_number % 20 == 0 and packet.sequence_number in self.send_buffer and \
-                                    self.send_buffer[packet.sequence_number][
-                                        1] is not None:
+                            if packet.sequence_number % 10 == 0 and packet.sequence_number in self.send_buffer and \
+                                    self.send_buffer[packet.sequence_number][1] is not None:
                                 self.calculate_new_timeout(time.time() - self.send_buffer[packet.sequence_number][1])
                             self.send_buffer[packet.sequence_number] = (ack_packet, None)
                         elif packet.fin:
+
+
                             # print("FIN RECEIVED", time.time())
                             self.send_ack(acknowledgement_number=packet.sequence_number)
                             self.last_fin_ack_sent = time.time()
@@ -136,8 +138,8 @@ class Streamer:
                             if packet.sequence_number not in self.receive_buffer:
                                 self.receive_buffer[packet.sequence_number] = packet
             except Exception as e:
-                pass
-                # print(e)
+                print("receiver died", e)
+                # traceback.print_exc(file=sys.stdout)
                 # self.remote_closed = True
         return True
 
@@ -185,6 +187,6 @@ class Streamer:
 
     def calculate_new_timeout(self, sample_rtt: float):
         self.EstimatedRTT = (1 - self.alpha) * self.EstimatedRTT + self.alpha * sample_rtt
-        # self.DevRTT = (1 - self.beta) * self.DevRTT + self.beta * abs(sample_rtt - self.EstimatedRTT)
+        self.DevRTT = (1 - self.beta) * self.DevRTT + self.beta * abs(sample_rtt - self.EstimatedRTT)
         self.time_out_seconds = self.EstimatedRTT + self.DevRTT * 4
         # print(self.time_out_seconds)
