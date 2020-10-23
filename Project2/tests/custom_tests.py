@@ -55,7 +55,7 @@ def receive(s, nums):
 
 
 def host1(listen_port, remote_port, nums, alpha, beta, default_wait_seconds,
-          sim: test_packages.lossy_socket.SimulationParams) -> test_packages.lossy_socket.SimulationStats:
+          sim: test_packages.lossy_socket.SimulationParams):
     s = Streamer(dst_ip="localhost", dst_port=remote_port,
                  src_ip="localhost", src_port=listen_port)
 
@@ -85,7 +85,7 @@ def host1(listen_port, remote_port, nums, alpha, beta, default_wait_seconds,
 
 
 def host2(listen_port, remote_port, nums, alpha, beta, default_wait_seconds,
-          sim: test_packages.lossy_socket.SimulationParams) -> test_packages.lossy_socket.SimulationStats:
+          sim: test_packages.lossy_socket.SimulationParams):
     s = Streamer(dst_ip="localhost", dst_port=remote_port,
                  src_ip="localhost", src_port=listen_port)
 
@@ -170,12 +170,6 @@ def test_async(nums, loss_rate, corruption_rate, max_delivery_delay, alpha, beta
     return res
 
 
-def write_test_results():
-    with open('test_outputs.csv', 'w+', newline='') as file_writer:
-        csv_writer = csv.writer(file_writer)
-        csv_writer.writerows(test_results)
-
-
 # loss_rates = [0.1, 0.2]
 # corruption_rates = [0.1, 0.2]
 # max_delivery_delays = [0.1, 0.2]
@@ -219,7 +213,6 @@ def get_complete_combinations(lists) -> list:
 
 
 def main():
-
     if len(sys.argv) < 2:
         print("usage is: python3 custom_tests.py [num_processes]")
     combinations = get_complete_combinations(
@@ -234,6 +227,21 @@ def main():
 
     with open('test_outputs.csv', 'a+', newline='') as file_writer:
         csv_writer = csv.writer(file_writer)
+        csv_writer.writerow(["nums", "loss_rate", "corruption_rate", "max_delivery_delay", "alpha", "beta", "default_wait_seconds",
+         "elapsed time",
+         "PACKETS_SENT1",
+         "PACKETS_RECV1",
+         "UDP BYTES SENT1",
+         "ETH BYTES SENT1",
+         "UDP BYTES RECV1",
+         "ETH BYTES RECV1",
+         "PACKETS_SENT2",
+         "PACKETS_RECV2",
+         "UDP BYTES SENT2",
+         "ETH BYTES SENT2",
+         "UDP BYTES RECV2",
+         "ETH BYTES RECV2",
+         ])
 
         for nums in nums_list:
             for loss_rate, corruption_rate, max_delivery_delay, alpha, beta, default_wait_seconds in combinations:
@@ -247,8 +255,9 @@ def main():
                     time.sleep(0.1)
                 test_thread = executor.apply_async(func=test_async,
                                                    args=(
-                                                   nums, loss_rate, corruption_rate, max_delivery_delay, alpha, beta,
-                                                   default_wait_seconds))
+                                                       nums, loss_rate, corruption_rate, max_delivery_delay, alpha,
+                                                       beta,
+                                                       default_wait_seconds))
                 threads.append(test_thread)
 
         for thread in threads:
