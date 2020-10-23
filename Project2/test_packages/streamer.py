@@ -6,8 +6,8 @@ import traceback
 from concurrent.futures import ThreadPoolExecutor
 from socket import INADDR_ANY
 
-from tests.TCPPacket import TCPPacket
-from tests.lossy_socket import LossyUDP
+from test_packages.TCPPacket import TCPPacket
+from test_packages.lossy_socket import LossyUDP
 
 
 class Streamer:

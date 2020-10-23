@@ -5,8 +5,8 @@ import socket
 import sys
 import time
 
-import tests.lossy_socket
-from tests.streamer import Streamer
+import test_packages.lossy_socket
+from test_packages.streamer import Streamer
 
 reserved_ports = []
 test_results = []
@@ -55,7 +55,7 @@ def receive(s, nums):
 
 
 def host1(listen_port, remote_port, nums, alpha, beta, default_wait_seconds,
-          sim: tests.lossy_socket.SimulationParams) -> tests.lossy_socket.SimulationStats:
+          sim: test_packages.lossy_socket.SimulationParams) -> test_packages.lossy_socket.SimulationStats:
     s = Streamer(dst_ip="localhost", dst_port=remote_port,
                  src_ip="localhost", src_port=listen_port)
 
@@ -85,7 +85,7 @@ def host1(listen_port, remote_port, nums, alpha, beta, default_wait_seconds,
 
 
 def host2(listen_port, remote_port, nums, alpha, beta, default_wait_seconds,
-          sim: tests.lossy_socket.SimulationParams) -> tests.lossy_socket.SimulationStats:
+          sim: test_packages.lossy_socket.SimulationParams) -> test_packages.lossy_socket.SimulationStats:
     s = Streamer(dst_ip="localhost", dst_port=remote_port,
                  src_ip="localhost", src_port=listen_port)
 
@@ -130,13 +130,13 @@ def test_port(port_num: int) -> bool:
 def test_async(nums, loss_rate, corruption_rate, max_delivery_delay, alpha, beta, default_wait_seconds) -> list:
     start_time = time.time()
     executor = MyPool(2)
-    sim1 = tests.lossy_socket.SimulationParams(loss_rate=loss_rate, corruption_rate=corruption_rate,
-                                               max_delivery_delay=max_delivery_delay,
-                                               become_reliable_after=100000000.0)
+    sim1 = test_packages.lossy_socket.SimulationParams(loss_rate=loss_rate, corruption_rate=corruption_rate,
+                                                       max_delivery_delay=max_delivery_delay,
+                                                       become_reliable_after=100000000.0)
 
-    sim2 = tests.lossy_socket.SimulationParams(loss_rate=loss_rate, corruption_rate=corruption_rate,
-                                               max_delivery_delay=max_delivery_delay,
-                                               become_reliable_after=100000000.0)
+    sim2 = test_packages.lossy_socket.SimulationParams(loss_rate=loss_rate, corruption_rate=corruption_rate,
+                                                       max_delivery_delay=max_delivery_delay,
+                                                       become_reliable_after=100000000.0)
 
     port_1 = get_available_port()
     port_2 = get_available_port()
@@ -219,10 +219,13 @@ def get_complete_combinations(lists) -> list:
 
 
 def main():
+
+    if len(sys.argv) < 2:
+        print("usage is: python3 custom_tests.py [num_processes]")
     combinations = get_complete_combinations(
         [loss_rates, corruption_rates, max_delivery_delays, alphas, betas, default_wait_seconds_list])
 
-    num_processes = 20
+    num_processes = int(sys.argv[1])
     executor = MyPool(processes=num_processes)
 
     index = 0
