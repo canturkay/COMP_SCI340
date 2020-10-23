@@ -5,7 +5,7 @@ from time import sleep, time
 from typing import Tuple
 
 # constant seed makes the random number generator deterministic during testing
-random.seed(398120)
+# random.seed(398120)
 
 
 class SimulationParams:
