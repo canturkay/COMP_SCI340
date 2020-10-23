@@ -31,7 +31,7 @@ class Streamer:
     default_wait_seconds = 0.001
 
     alpha = 0.1
-    beta = 0.25
+    beta = 0.1
     DevRTT = 0.01
     EstimatedRTT = 0.15
 
@@ -185,6 +185,6 @@ class Streamer:
 
     def calculate_new_timeout(self, sample_rtt: float):
         self.EstimatedRTT = (1 - self.alpha) * self.EstimatedRTT + self.alpha * sample_rtt
-        # self.DevRTT = (1 - self.beta) * self.DevRTT + self.beta * abs(sample_rtt - self.EstimatedRTT)
+        self.DevRTT = (1 - self.beta) * self.DevRTT + self.beta * abs(sample_rtt - self.EstimatedRTT)
         self.time_out_seconds = self.EstimatedRTT + self.DevRTT * 4
         # print(self.time_out_seconds)

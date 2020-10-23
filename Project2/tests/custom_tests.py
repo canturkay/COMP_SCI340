@@ -130,6 +130,7 @@ def test_port(port_num: int) -> bool:
 def test_async(nums, loss_rate, corruption_rate, max_delivery_delay, alpha, beta, default_wait_seconds) -> list:
     start_time = time.time()
     executor = MyPool(2)
+
     sim1 = test_packages.lossy_socket.SimulationParams(loss_rate=loss_rate, corruption_rate=corruption_rate,
                                                        max_delivery_delay=max_delivery_delay,
                                                        become_reliable_after=100000000.0)
@@ -180,13 +181,13 @@ def test_async(nums, loss_rate, corruption_rate, max_delivery_delay, alpha, beta
 #
 # nums_list = [100, 1000, 10000]
 
-loss_rates = [0.1, 0.3]
-corruption_rates = [0.1, 0.3]
-max_delivery_delays = [0.1, 0.3]
-alphas = [0.1, 0.125, 0.2]
-betas = [0, 0.1, 0.25]
+loss_rates = [0.01, 0.1]
+corruption_rates = [0.01, 0.1]
+max_delivery_delays = [0.1]
+alphas = [0.05, 0.125]
+betas = [0, 0.15]
 default_wait_seconds_list = [0.01, 0.1]
-nums_list = [100, 1000, 10000]
+nums_list = [100, 1000]
 
 
 def get_combinations(list_1: list, list_2: list) -> list:
@@ -225,23 +226,24 @@ def main():
     total_len = len(combinations) * len(nums_list)
     threads = []
 
-    with open('test_outputs.csv', 'a+', newline='') as file_writer:
+    with open('../test_results/test_outputs.csv', 'a+', newline='') as file_writer:
         csv_writer = csv.writer(file_writer)
-        csv_writer.writerow(["nums", "loss_rate", "corruption_rate", "max_delivery_delay", "alpha", "beta", "default_wait_seconds",
-         "elapsed time",
-         "PACKETS_SENT1",
-         "PACKETS_RECV1",
-         "UDP BYTES SENT1",
-         "ETH BYTES SENT1",
-         "UDP BYTES RECV1",
-         "ETH BYTES RECV1",
-         "PACKETS_SENT2",
-         "PACKETS_RECV2",
-         "UDP BYTES SENT2",
-         "ETH BYTES SENT2",
-         "UDP BYTES RECV2",
-         "ETH BYTES RECV2",
-         ])
+        csv_writer.writerow(
+            ["nums", "loss_rate", "corruption_rate", "max_delivery_delay", "alpha", "beta", "default_wait_seconds",
+             "elapsed time",
+             "PACKETS_SENT1",
+             "PACKETS_RECV1",
+             "UDP BYTES SENT1",
+             "ETH BYTES SENT1",
+             "UDP BYTES RECV1",
+             "ETH BYTES RECV1",
+             "PACKETS_SENT2",
+             "PACKETS_RECV2",
+             "UDP BYTES SENT2",
+             "ETH BYTES SENT2",
+             "UDP BYTES RECV2",
+             "ETH BYTES RECV2",
+             ])
 
         for nums in nums_list:
             for loss_rate, corruption_rate, max_delivery_delay, alpha, beta, default_wait_seconds in combinations:
