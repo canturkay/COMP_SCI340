@@ -103,16 +103,18 @@ class Link_State_Node(Node):
     # Return a neighbor, -1 if no path to destination
     def get_next_hop(self, destination):
         res = self.dijkstra(destination)
-        if res:
+        if res is not None:
             return res[0]
         else:
             return -1
 
     def dijkstra(self, destination: int) -> list:
+        if self.id == 4 and destination == 11:
+            print("YPP")
         dist = {}
-        q = [Node_Heap_Object(node_id=self.id, cost=0, prev=[])]
+        q = []
+        heapq.heappush(q, Node_Heap_Object(node_id=self.id, cost=0, prev=[]))
         dist[self.id] = 0
-        heapq.heapify(q)
 
         while len(q) > 0:
             v = heapq.heappop(q)
@@ -121,16 +123,17 @@ class Link_State_Node(Node):
 
             for key, val in self.edges.items():
                 neighbor_key = None
-                if key[0] == v.node_id and (key[1] not in dist or dist[key[1]] > val.cost + v.cost):
+                if key[0] == v.node_id:
                     neighbor_key = key[1]
-                elif key[1] == v.node_id and (key[0] not in dist or dist[key[0]] > val.cost + v.cost):
+                elif key[1] == v.node_id:
                     neighbor_key = key[0]
 
-                if neighbor_key:
-                    heapq.heappush(q,
-                                   Node_Heap_Object(node_id=neighbor_key, cost=val.cost + v.cost,
-                                                    prev=v.prev + [neighbor_key]))
-                    dist[neighbor_key] = val.cost + v.cost
+                if neighbor_key is not None:
+                    if neighbor_key not in dist or dist[neighbor_key] > val.cost + v.cost:
+                        heapq.heappush(q,
+                                       Node_Heap_Object(node_id=neighbor_key, cost=val.cost + v.cost,
+                                                        prev=v.prev + [neighbor_key]))
+                        dist[neighbor_key] = val.cost + v.cost
 
         return None
 
