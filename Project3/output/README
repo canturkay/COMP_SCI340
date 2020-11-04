@@ -1,0 +1,2 @@
+Output will go in this folder.  Git does not let you commit an empty folder,
+so this file allows the folder to be created on a clean checkout.
