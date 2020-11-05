@@ -2,6 +2,7 @@ import datetime
 import heapq
 import json
 
+
 from simulator.node import Node
 
 
@@ -9,11 +10,11 @@ class Link_State_Edge:
     cost = None
     time = None
 
-    def init(self, cost: int, time: datetime.datetime):
+    def init(self, cost: int, time: int):
         self.cost = cost
         self.time = time
 
-    def is_newer_than(self, other: datetime.datetime):
+    def is_newer_than(self, other: int):
         return self.time > other
 
     def from_str(self, message: str):
@@ -22,7 +23,7 @@ class Link_State_Edge:
 
     def from_map(self, json_value):
         self.cost = int(json_value["cost"])
-        self.time = datetime.datetime.strptime(json_value["time"], '%Y-%m-%d %H:%M:%S.%f')
+        self.time = int(json_value["time"])
 
     def __str__(self):
         return json.dumps(
@@ -35,7 +36,7 @@ class Link_State_Edge:
     def as_dict(self):
         return {
             "cost": self.cost,
-            "time": str(self.time)
+            "time": self.time
         }
 
 
@@ -64,34 +65,29 @@ class Link_State_Node(Node):
 
     # Return a string
     def __str__(self):
-        return "Rewrite this function to define your node dump printout"
+        message = {}
+        for key, val in self.edges.items():
+            message[str((tuple(key)[1], tuple(key)[0])) if tuple(key)[0] == self.id else str(tuple(key))] = val.as_dict()
+
+        return json.dumps(message)
 
     # Fill in this function
     def link_has_been_updated(self, neighbor, latency):
-            if (self.id, neighbor) not in self.edges:
-                link = Link_State_Edge()
-                link.init(cost=latency, time=datetime.datetime.now())
-                self.edges[(self.id, neighbor)] = link
-                self.broadcast_to_neighbors()
-            else:
-                # if not self.edges[(self.id, neighbor)].is_newer_than(datetime.datetime.now()):
-                link = Link_State_Edge()
-                link.init(cost=latency, time=datetime.datetime.now())
-                self.edges[(self.id, neighbor)] = link
-                self.broadcast_to_neighbors()
+        link = Link_State_Edge()
+        link.init(cost=latency, time=self.get_time())
+        self.edges[frozenset((self.id, neighbor))] = link
+
+        self.broadcast_to_neighbors()
 
     def broadcast_to_neighbors(self):
-        message = {}
-        for key, val in self.edges.items():
-            message[str(key)] = val.as_dict()
-        # self.send_to_neighbors(json.dumps(message))
+        self.send_to_neighbors(str(self))
 
     # Fill in this function
     def process_incoming_routing_message(self, m):
-        edges = json.loads(m)
+        _edges = json.loads(m)
         changed = False
 
-        for str_key, value in edges.items():
+        for str_key, value in _edges.items():
             key = tuple(map(int, str_key[1:-1].split(',')))
             # value = json.loads(str_value)
             link = Link_State_Edge()
@@ -100,6 +96,27 @@ class Link_State_Node(Node):
 
         if changed:
             self.broadcast_to_neighbors()
+
+    def update_edge(self, source: int, destination: int, new_edge: Link_State_Edge) -> bool:
+        # src = source
+        # dst = destination
+        changed = False
+
+        # if destination == self.id:
+        #     src = destination
+        #     dst = source
+        # elif (destination, source) in self.edges:
+        #     src = destination
+        #     dst = source
+
+        if (frozenset((source, destination)) in self.edges and new_edge.is_newer_than(self.edges[frozenset((source, destination))].time)) or frozenset((
+                source, destination)) not in self.edges:
+            link = Link_State_Edge()
+            link.init(cost=new_edge.cost, time=new_edge.time)
+            self.edges[frozenset((source, destination))] = link
+            changed = True
+
+        return changed
 
     # Return a neighbor, -1 if no path to destination
     def get_next_hop(self, destination):
@@ -110,8 +127,6 @@ class Link_State_Node(Node):
             return -1
 
     def dijkstra(self, destination: int):
-        if self.id == 4 and destination == 11:
-            print("YPP")
         dist = {}
         q = []
         heapq.heappush(q, Node_Heap_Object(node_id=self.id, cost=0, prev=[]))
@@ -122,7 +137,8 @@ class Link_State_Node(Node):
             if v.node_id == destination:
                 return v.prev, v.cost
 
-            for key, val in self.edges.items():
+            for key_frozen, val in self.edges.items():
+                key = tuple(key_frozen)
                 if val.cost < 0:
                     pass
                 else:
@@ -140,25 +156,3 @@ class Link_State_Node(Node):
                             dist[neighbor_key] = val.cost + v.cost
 
         return None
-
-    def update_edge(self, source: int, destination: int, new_edge: Link_State_Edge) -> bool:
-        src = source
-        dst = destination
-        changed = False
-
-        if destination == self.id:
-            src = destination
-            dst = source
-
-        if (dst, src) in self.edges:
-            self.edges[(src, dst)] = self.edges[(dst, src)]
-            del self.edges[(dst, src)]
-
-        if ((src, dst) in self.edges and new_edge.is_newer_than(self.edges[(src, dst)].time)) or (
-                src, dst) not in self.edges:
-            link = Link_State_Edge()
-            link.init(cost=new_edge.cost, time=new_edge.time)
-            self.edges[(src, dst)] = link
-            changed = True
-
-        return changed
