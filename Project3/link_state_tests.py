@@ -56,4 +56,33 @@ node.process_incoming_routing_message(
         "}"
 )
 
+print(node.edges)
+print(node.dijkstra(destination=8))
+
+node.link_has_been_updated(neighbor=2, latency=-1)
+print(node.edges)
+print(node.dijkstra(destination=8))
+
+link1.time = datetime.datetime.now() - datetime.timedelta(minutes=1)
+link6.cost = 2
+# link7.cost = 1
+node.process_incoming_routing_message(
+    m = "{"
+        "\"(2,1)\": " + str(link1) +
+        ",\"(1,3)\": " + str(link2) +
+        ",\"(6,1)\": " + str(link3) +
+        ",\"(2,4)\": " + str(link4) +
+        ",\"(2,5)\": " + str(link5) +
+        ",\"(5,3)\": " + str(link6) +
+        ",\"(6,4)\": " + str(link7) +
+        ",\"(4,5)\": " + str(link8) +
+        ",\"(5,6)\": " + str(link9) +
+        ",\"(6,7)\": " + str(link10) +
+        ",\"(5,7)\": " + str(link11) +
+        ",\"(7,8)\": " + str(link12) +
+        ",\"(8,5)\": " + str(link13) +
+        ",\"(3,8)\": " + str(link14) +
+        "}"
+)
+print(node.edges)
 print(node.dijkstra(destination=8))

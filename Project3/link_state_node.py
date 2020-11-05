@@ -14,7 +14,7 @@ class Link_State_Edge:
         self.time = time
 
     def is_newer_than(self, other: datetime.datetime):
-        return self.time < other
+        return self.time > other
 
     def from_str(self, message: str):
         json_value = json.loads(message)
@@ -26,11 +26,17 @@ class Link_State_Edge:
 
     def __str__(self):
         return json.dumps(
-            {
-                "cost": self.cost,
-                "time": str(self.time)
-            }
+            self.as_dict()
         )
+
+    def __repr__(self):
+        return str(self)
+
+    def as_dict(self):
+        return {
+            "cost": self.cost,
+            "time": str(self.time)
+        }
 
 
 class Node_Heap_Object:
@@ -62,7 +68,6 @@ class Link_State_Node(Node):
 
     # Fill in this function
     def link_has_been_updated(self, neighbor, latency):
-        if latency > -1:
             if (self.id, neighbor) not in self.edges:
                 link = Link_State_Edge()
                 link.init(cost=latency, time=datetime.datetime.now())
@@ -74,25 +79,21 @@ class Link_State_Node(Node):
                 link.init(cost=latency, time=datetime.datetime.now())
                 self.edges[(self.id, neighbor)] = link
                 self.broadcast_to_neighbors()
-        else:
-            if (self.id, neighbor) in self.edges:
-                del self.edges[(self.id, neighbor)]
-                self.broadcast_to_neighbors()
 
     def broadcast_to_neighbors(self):
         message = {}
         for key, val in self.edges.items():
-            message[str(key)] = str(val)
-        self.send_to_neighbors(json.dumps(message))
+            message[str(key)] = val.as_dict()
+        # self.send_to_neighbors(json.dumps(message))
 
     # Fill in this function
     def process_incoming_routing_message(self, m):
         edges = json.loads(m)
         changed = False
 
-        for str_key, str_value in edges.items():
+        for str_key, value in edges.items():
             key = tuple(map(int, str_key[1:-1].split(',')))
-            value = json.loads(str_value)
+            # value = json.loads(str_value)
             link = Link_State_Edge()
             link.from_map(value)
             changed = self.update_edge(source=key[0], destination=key[1], new_edge=link) or changed
@@ -102,13 +103,13 @@ class Link_State_Node(Node):
 
     # Return a neighbor, -1 if no path to destination
     def get_next_hop(self, destination):
-        res = self.dijkstra(destination)
+        res, _ = self.dijkstra(destination)
         if res is not None:
             return res[0]
         else:
             return -1
 
-    def dijkstra(self, destination: int) -> list:
+    def dijkstra(self, destination: int):
         if self.id == 4 and destination == 11:
             print("YPP")
         dist = {}
@@ -119,21 +120,24 @@ class Link_State_Node(Node):
         while len(q) > 0:
             v = heapq.heappop(q)
             if v.node_id == destination:
-                return v.prev
+                return v.prev, v.cost
 
             for key, val in self.edges.items():
-                neighbor_key = None
-                if key[0] == v.node_id:
-                    neighbor_key = key[1]
-                elif key[1] == v.node_id:
-                    neighbor_key = key[0]
+                if val.cost < 0:
+                    pass
+                else:
+                    neighbor_key = None
+                    if key[0] == v.node_id:
+                        neighbor_key = key[1]
+                    elif key[1] == v.node_id:
+                        neighbor_key = key[0]
 
-                if neighbor_key is not None:
-                    if neighbor_key not in dist or dist[neighbor_key] > val.cost + v.cost:
-                        heapq.heappush(q,
-                                       Node_Heap_Object(node_id=neighbor_key, cost=val.cost + v.cost,
-                                                        prev=v.prev + [neighbor_key]))
-                        dist[neighbor_key] = val.cost + v.cost
+                    if neighbor_key is not None:
+                        if neighbor_key not in dist or val.cost + v.cost < dist[neighbor_key]:
+                            heapq.heappush(q,
+                                           Node_Heap_Object(node_id=neighbor_key, cost=val.cost + v.cost,
+                                                            prev=v.prev + [neighbor_key]))
+                            dist[neighbor_key] = val.cost + v.cost
 
         return None
 
