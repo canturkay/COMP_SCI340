@@ -81,6 +81,7 @@ class Link_State_Node(Node):
 
     def broadcast_to_neighbors(self):
         self.send_to_neighbors(str(self))
+        pass
 
     # Fill in this function
     def process_incoming_routing_message(self, m):
