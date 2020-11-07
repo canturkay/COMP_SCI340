@@ -24,10 +24,10 @@ class NoDaemonProcess(multiprocessing.Process):
 
 
 # We sub-class multiprocessing.pool.Pool instead of multiprocessing.Pool
-# because the latter is only a wrapper function, not a proper class.
+# because the latter is only a wrapper funrecentction, not a proper class.
 class MyPool(multiprocessing.pool.Pool):
     Process = NoDaemonProcess
-
+recent
 
 def receive(s, nums):
     expected = 0
