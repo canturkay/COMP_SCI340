@@ -1,37 +1,10 @@
-from simulator.node import Node
 import copy
 import json
-'''
+
 from simulator.node import Node
 
 
-class Distance_Vector_Node(Node):
-    def __init__(self, id):
-        super().__init__(id)
-
-    # Return a string
-    def __str__(self):
-        return "Rewrite this function to define your node dump printout"
-
-    # Fill in this function
-    def link_has_been_updated(self, neighbor, latency):
-        # latency = -1 if delete a link
-        pass
-
-    # Fill in this function
-    def process_incoming_routing_message(self, m):
-        pass
-
-    # Return a neighbor, -1 if no path to destination
-    def get_next_hop(self, destination):
-        return -1
-'''
-
 class Distance_Vector_Edge:
-    cost = None
-    time = None
-    path = []
-
     def __init__(self, cost: int, path: list, time: int):
         self.cost = cost
         self.path = path
@@ -66,65 +39,135 @@ class Distance_Vector_Edge:
 
 
 class Distance_Vector_Node(Node):
-    edges = {}
-    #src, destination, cost, path, time
-
 
     def __init__(self, id):
         super().__init__(id)
+        self.my_dvs = {}
+        self.neighbor_dvs = {}
+        self.link_costs = {}
 
     # Return a string
     def __str__(self):
         message = {}
-        for key, val in self.edges.items():
+        for key, val in self.my_dvs.items():
             message[
                 str((tuple(key)[1], tuple(key)[0])) if tuple(key)[0] == self.id else str(tuple(key))] = val.as_dict()
 
-        return json.dumps(message)
+        return copy.deepcopy(json.dumps(message))
 
     # Fill in this function
     def link_has_been_updated(self, neighbor, latency):
-        # latency = -1 if delete a link
-        hops = [self.id, neighbor]
-        if latency == -1:
-            hops = []
-        link = Distance_Vector_Edge()
-        link.init(cost=latency, time=self.get_time(), hops=hops)
-        self.edges[frozenset((self.id, neighbor))] = link
+        if latency == -1 and neighbor in self.link_costs:
+            del self.link_costs[neighbor]
+            del self.my_dvs[frozenset((self.id, neighbor))]
 
+            for key, dv in copy.deepcopy(self.my_dvs).items():
+                if dv.path[1] == neighbor:
+                    del self.my_dvs[key]
+            for key, dv in copy.deepcopy(self.neighbor_dvs).items():
+                if dv.path[0] == neighbor:
+                    del self.neighbor_dvs[key]
+
+        else:
+            self.link_costs[neighbor] = latency
+            if frozenset((self.id, neighbor)) in self.my_dvs and self.my_dvs[
+                frozenset((self.id, neighbor))].cost < latency:
+                pass
+            else:
+                self.my_dvs[frozenset((self.id, neighbor))] = Distance_Vector_Edge(cost=latency,
+                                                                                   path=[self.id, neighbor],
+                                                                                   time=self.get_time())
+
+        self.recompute_my_dvs()
         self.broadcast_to_neighbors()
 
     def broadcast_to_neighbors(self):
-        self.send_to_neighbors(str(self))
+        # self.send_to_neighbors(str(self))
+        pass
 
     # Fill in this function
     def process_incoming_routing_message(self, m):
-        _edges = json.loads(m)
+        _neighbor_dvs = json.loads(m)
         changed = False
 
-        for str_key, value in _edges.items():
+        for str_key, value in _neighbor_dvs.items():
             key = tuple(map(int, str_key[1:-1].split(',')))
             # value = json.loads(str_value)
-            link = Distance_Vector_Edge()
-            link.from_map(value)
-            changed = self.update_edge(source=key[0], destination=key[1], new_edge=link) or changed
+            link = Distance_Vector_Edge(cost=int(value['cost']), path=value['path'], time=int(value['time']))
+            # link.from_map(value)
+            if key[0] != self.id:
+                changed = self.update_neighbor_dvs(key=key, new_dv=link) or changed
 
         if changed:
+            self.recompute_my_dvs()
             self.broadcast_to_neighbors()
 
-    def update_edge(self, source: int, destination: int, new_edge: Distance_Vector_Edge()) -> bool:
-        changed = False
+    def recompute_my_dvs(self):
+        for key, dv in copy.deepcopy(self.neighbor_dvs).items():
+            if self.id not in dv.path:
+                source = tuple(key)[0]
+                destination = tuple(key)[1]
+                if source in self.link_costs:
+                    src = source
+                    dst = destination
 
-        if (frozenset((source, destination)) in self.edges and new_edge.is_newer_than(
-                self.edges[frozenset((source, destination))].time)) or frozenset((
-                source, destination)) not in self.edges:
-            link = Distance_Vector_Edge()
-            link.__init__(cost=new_edge.cost, time=new_edge.time, hops=[])
-            self.edges[frozenset((source, destination))] = link
-            changed = True
+                    self.recompute_single_dv(src=src, dst=dst, dv=dv)
 
-        return changed
+                if destination in self.link_costs:
+                    src = destination
+                    dst = source
+
+                    self.recompute_single_dv(src=src, dst=dst, dv=dv)
+
+                if source not in self.link_costs and destination not in self.link_costs:
+                    del self.neighbor_dvs[frozenset((source, destination))]
+
+    def recompute_single_dv(self, src: str, dst: str, dv: Distance_Vector_Edge):
+        new_cost = self.my_dvs[frozenset((self.id, src))].cost + dv.cost
+
+        if frozenset((self.id, dst)) in self.my_dvs and self.dv_is_valid(self.my_dvs[frozenset((self.id, dst))]):
+            if new_cost < self.my_dvs[frozenset((self.id, dst))].cost:
+                new_dv = copy.deepcopy(dv)
+                new_dv.cost += self.my_dvs[frozenset((self.id, src))].cost
+                new_dv.path = self.my_dvs[frozenset((self.id, src))].path[:-1] + new_dv.path
+                self.my_dvs[frozenset((self.id, dst))] = new_dv
+            else:
+                pass
+        else:
+            new_dv = copy.deepcopy(dv)
+            new_dv.cost += self.my_dvs[frozenset((self.id, src))].cost
+            new_dv.path = self.my_dvs[frozenset((self.id, src))].path[:-1] + new_dv.path
+            self.my_dvs[frozenset((self.id, dst))] = new_dv
+
+    def dv_is_valid(self, dv: Distance_Vector_Edge):
+        if dv.path[0] == 3 and dv.path[-1] == 6:
+            print(" ")
+        return dv.path[1] in self.link_costs and self.id not in dv.path[1:]
+
+    def update_neighbor_dvs(self, key: tuple, new_dv: Distance_Vector_Edge) -> bool:
+        if self.id in new_dv.path:
+            return False
+        if frozenset(key) in self.neighbor_dvs:
+            if new_dv.is_newer_than(self.neighbor_dvs[frozenset(key)].time):
+                if new_dv.cost == self.neighbor_dvs[frozenset(key)].cost and new_dv.path == self.neighbor_dvs[
+                    frozenset(key)].path:
+                    self.neighbor_dvs[frozenset(key)].time = new_dv.time
+                    return False
+                else:
+                    self.neighbor_dvs[frozenset(key)] = new_dv
+                    return True
+            else:
+                return False
+        else:
+            self.neighbor_dvs[frozenset(key)] = new_dv
+
+        return True
 
     # Return a neighbor, -1 if no path to destination
     def get_next_hop(self, destination):
-        return self.edges[frozenset(self.id, destination)][1][2]
+        if self.id == 1 and destination == 4:
+            print(" ")
+        if frozenset((self.id, destination)) in self.my_dvs:
+            return self.my_dvs[frozenset((self.id, destination))].path[1]
+
+        return -1

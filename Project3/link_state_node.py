@@ -7,9 +7,6 @@ from simulator.node import Node
 
 
 class Link_State_Edge:
-    cost = None
-    time = None
-
     def init(self, cost: int, time: int):
         self.cost = cost
         self.time = time
@@ -41,10 +38,6 @@ class Link_State_Edge:
 
 
 class Node_Heap_Object:
-    node_id = None
-    cost = None
-    prev = []
-
     def __repr__(self):
         return str(self.node_id) + ": " + str(self.cost) + " - " + str(self.prev)
 
@@ -58,10 +51,9 @@ class Node_Heap_Object:
 
 
 class Link_State_Node(Node):
-    edges = {}
-
     def __init__(self, id):
         super().__init__(id)
+        self.edges = {}
 
     # Return a string
     def __str__(self):
