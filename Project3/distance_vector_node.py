@@ -44,7 +44,7 @@ class Distance_Vector_Node(Node):
         super().__init__(id)
         self.my_dvs = {}
         self.neighbor_dvs = {}
-        self.dv_seqnum = {}
+        self.neighbor_seq_nums = {}
         self.link_costs = {}
         self.seq_num = 0
 
@@ -64,7 +64,7 @@ class Distance_Vector_Node(Node):
             del self.neighbor_dvs[neighbor]
 
         else:
-            self.link_costs[neighbor] = (latency, self.get_time())
+            self.link_costs[neighbor] = latency
 
         self.recompute_dvs()
         pass
@@ -74,7 +74,7 @@ class Distance_Vector_Node(Node):
         self.my_dvs = {}
 
         for neighbor, link_cost in self.link_costs.items():
-            self.my_dvs[neighbor] = Distance_Vector(cost=link_cost[0], path=[self.id, neighbor])
+            self.my_dvs[neighbor] = Distance_Vector(cost=link_cost, path=[self.id, neighbor])
 
         # for neighbor, value in self.link_costs.items():
         #     cost = value[0]
@@ -90,7 +90,9 @@ class Distance_Vector_Node(Node):
             self.broadcast_to_neighbors()
 
     def recompute_single_dv(self, src: int, dst: int, dv: Distance_Vector):
-        new_cost = dv.cost + self.link_costs[src][0]
+        if src not in self.link_costs:
+            return
+        new_cost = dv.cost + self.link_costs[src]
         if dst not in self.my_dvs or (dst in self.my_dvs and new_cost < self.my_dvs[dst].cost):
             new_path = [self.id] + copy.deepcopy(dv.path)
             self.my_dvs[dst] = Distance_Vector(cost=new_cost, path=new_path)
@@ -115,8 +117,6 @@ class Distance_Vector_Node(Node):
 
         to_delete = []
 
-        self.dv_seqnum[neighbor] = seq_num
-
         if neighbor not in self.neighbor_dvs:
             self.neighbor_dvs[neighbor] = {}
 
@@ -136,6 +136,8 @@ class Distance_Vector_Node(Node):
             del self.neighbor_dvs[neighbor][dst]
             changed = True
 
+        self.neighbor_seq_nums[neighbor] = seq_num
+
         if changed:
             self.recompute_dvs()
 
@@ -145,7 +147,7 @@ class Distance_Vector_Node(Node):
                 del self.neighbor_dvs[src][dst]
                 return True
 
-            if seq_num > self.dv_seqnum[src]:
+            if seq_num > self.neighbor_seq_nums[src]:
                 self.neighbor_dvs[src][dst] = dv
                 return True
             return False
