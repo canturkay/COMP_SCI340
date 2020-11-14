@@ -120,6 +120,9 @@ class Distance_Vector_Node(Node):
         if neighbor not in self.neighbor_dvs:
             self.neighbor_dvs[neighbor] = {}
 
+        if neighbor in self.neighbor_seq_nums and seq_num < self.neighbor_seq_nums[neighbor]:
+            return
+
         for dst, value in copy.deepcopy(self.neighbor_dvs[neighbor]).items():
             to_delete.append(dst)
 
@@ -147,10 +150,8 @@ class Distance_Vector_Node(Node):
                 del self.neighbor_dvs[src][dst]
                 return True
 
-            if seq_num > self.neighbor_seq_nums[src]:
-                self.neighbor_dvs[src][dst] = dv
-                return True
-            return False
+            self.neighbor_dvs[src][dst] = dv
+            return True
         else:
             if self.id in dv.path:
                 return False
