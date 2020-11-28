@@ -33,7 +33,7 @@ class HttpInfo:
 
     def get_http(self) -> client.HTTPResponse:
         connection = client.HTTPConnection(self.get_hostname(self.url), timeout=2)
-        connection.request(method="GET", url=self.url)
+        connection.request(method="GET", url=self.get_hostname(self.url))
 
         response = connection.getresponse()
 
@@ -43,7 +43,7 @@ class HttpInfo:
 
     def get_https(self) -> client.HTTPResponse:
         connection = client.HTTPSConnection(self.get_hostname(self.url), timeout=2)
-        connection.request(method="GET", url=self.url)
+        connection.request(method="GET", url=self.get_hostname(self.url))
 
         response = connection.getresponse()
 
