@@ -104,19 +104,15 @@ class Distance_Vector_Node(Node):
     # Fill in this function
     def process_incoming_routing_message(self, m):
         _neighbor_dvs = json.loads(m)
-
+        print(_neighbor_dvs)
         seq_num = _neighbor_dvs['-1']
         del _neighbor_dvs['-1']
 
         changed = False
 
-        # time_sent = _neighbor_dvs['time_sent']
-        # del _neighbor_dvs['time_sent']
 
         neighbor = int(_neighbor_dvs[next(iter(_neighbor_dvs))]['path'][0])
-
         to_delete = []
-
         if neighbor not in self.neighbor_dvs:
             self.neighbor_dvs[neighbor] = {}
 
@@ -163,6 +159,8 @@ class Distance_Vector_Node(Node):
     def get_next_hop(self, destination):
         # if self.id == 1 and destination == 4:
         #     print(" ")
+        print(self.my_dvs)
+        print(self.neighbor_dvs)
         if destination in self.my_dvs:
             if self.my_dvs[destination].cost < float('inf'):
                 return copy.deepcopy(self.my_dvs[destination].path)[1]

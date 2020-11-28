@@ -1,0 +1,71 @@
+Index: streamer.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+># do not import anything else from loss_socket besides LossyUDP\r\nfrom lossy_socket import LossyUDP\r\n# do not import anything else from socket except INADDR_ANY\r\nfrom socket import INADDR_ANY\r\n\r\nimport struct\r\nfrom TCPPacket import TCPPacket\r\n\r\n\r\nclass Streamer:\r\n    last_sequence_number = 0\r\n\r\n    receive_buffer = []\r\n\r\n    def __init__(self, dst_ip, dst_port,\r\n                 src_ip=INADDR_ANY, src_port=0):\r\n        \"\"\"Default values listen on all network interfaces, chooses a random source port,\r\n           and does not introduce any simulated packet loss.\"\"\"\r\n        self.socket = LossyUDP()\r\n        self.socket.bind((src_ip, src_port))\r\n        self.dst_ip = dst_ip\r\n        self.dst_port = dst_port\r\n\r\n    def send(self, data_bytes: bytes) -> None:\r\n        \"\"\"Note that data_bytes can be larger than one packet.\"\"\"\r\n        chunk_size = 1024\r\n\r\n        chunk_index = 0\r\n        while chunk_index * chunk_size < len(data_bytes):\r\n            chunk_start_index = chunk_index*chunk_size\r\n            chunk_end_index = min(len(data_bytes), (chunk_index + 1) * chunk_size)\r\n\r\n            packet = TCPPacket()\r\n            res = packet.pack(self.last_sequence_number, data_bytes[chunk_start_index:chunk_end_index])\r\n            self.last_sequence_number += 1\r\n            packet.unpack(res)\r\n\r\n            self.socket.sendto(res,\r\n                               (self.dst_ip, self.dst_port))\r\n            chunk_index += 1\r\n\r\n        # Your code goes here!  The code below should be changed!\r\n\r\n        # for now I'm just sending the raw application-level data in one UDP payload\r\n\r\n    def recv(self) -> bytes:\r\n        \"\"\"Blocks (waits) if no data is ready to be read from the connection.\"\"\"\r\n\r\n        while len(self.receive_buffer) == 0 or \\\r\n                self.receive_buffer[0].sequence_number > self.last_sequence_number + 1:\r\n            data, addr = self.socket.recvfrom()\r\n            packet = TCPPacket()\r\n            packet.unpack(data)\r\n\r\n            self.receive_buffer.append(packet)\r\n            self.receive_buffer.sort(key=self.sort_func)\r\n\r\n        curr = self.receive_buffer.pop(0)\r\n        self.last_sequence_number += 1\r\n        print(curr.data_bytes)\r\n        print(self.last_sequence_number)\r\n\r\n        return curr.data_bytes\r\n\r\n    @staticmethod\r\n    def sort_func(e: TCPPacket): return e.sequence_number\r\n\r\n    def close(self) -> None:\r\n        \"\"\"Cleans up. It should block (wait) until the Streamer is done with all\r\n           the necessary ACKs and retransmissions\"\"\"\r\n        # your code goes here, especially after you add ACKs and retransmissions.\r\n        pass\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- streamer.py	(revision 750dfc2666ebda63752694ab59591adab452854e)
++++ streamer.py	(date 1602978186765)
+@@ -2,6 +2,7 @@
+ from lossy_socket import LossyUDP
+ # do not import anything else from socket except INADDR_ANY
+ from socket import INADDR_ANY
++import math
+ 
+ import struct
+ from TCPPacket import TCPPacket
+@@ -40,6 +41,17 @@
+             chunk_index += 1
+ 
+         # Your code goes here!  The code below should be changed!
++        '''chunk_size = 1472
++        all_data = len(data_bytes)
++        chunk_start = 0
++        chunk_end = chunk_size
++
++        while all_data > 0:
++            chunk_end = min(chunk_end, all_data)
++            self.socket.sendto(data_bytes[chunk_start:chunk_end], (self.dst_ip, self.dst_port))
++            chunk_start += chunk_size
++            chunk_end += chunk_size'''
++
+ 
+         # for now I'm just sending the raw application-level data in one UDP payload
+ 
+Index: .idea/Project2.iml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<module type=\"PYTHON_MODULE\" version=\"4\">\r\n  <component name=\"NewModuleRootManager\">\r\n    <content url=\"file://$MODULE_DIR$\">\r\n      <excludeFolder url=\"file://$MODULE_DIR$/venv\" />\r\n    </content>\r\n    <orderEntry type=\"inheritedJdk\" />\r\n    <orderEntry type=\"sourceFolder\" forTests=\"false\" />\r\n  </component>\r\n</module>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- .idea/Project2.iml	(revision 750dfc2666ebda63752694ab59591adab452854e)
++++ .idea/Project2.iml	(date 1602978646291)
+@@ -4,7 +4,7 @@
+     <content url="file://$MODULE_DIR$">
+       <excludeFolder url="file://$MODULE_DIR$/venv" />
+     </content>
+-    <orderEntry type="inheritedJdk" />
++    <orderEntry type="jdk" jdkName="Python 3.7" jdkType="Python SDK" />
+     <orderEntry type="sourceFolder" forTests="false" />
+   </component>
+ </module>
+\ No newline at end of file
+Index: .idea/misc.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"JavaScriptSettings\">\r\n    <option name=\"languageLevel\" value=\"ES6\" />\r\n  </component>\r\n  <component name=\"ProjectRootManager\" version=\"2\" project-jdk-name=\"Python 3.7 (Project2)\" project-jdk-type=\"Python SDK\" />\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- .idea/misc.xml	(revision 750dfc2666ebda63752694ab59591adab452854e)
++++ .idea/misc.xml	(date 1602978646312)
+@@ -3,5 +3,5 @@
+   <component name="JavaScriptSettings">
+     <option name="languageLevel" value="ES6" />
+   </component>
+-  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.7 (Project2)" project-jdk-type="Python SDK" />
++  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.7" project-jdk-type="Python SDK" />
+ </project>
+\ No newline at end of file

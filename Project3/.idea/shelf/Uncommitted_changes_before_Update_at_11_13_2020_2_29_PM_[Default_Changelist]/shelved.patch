@@ -1,0 +1,89 @@
+Index: distance_vector_node.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import copy\r\nimport json\r\nimport math\r\n\r\nfrom simulator.node import Node\r\n\r\n\r\nclass Distance_Vector_Edge:\r\n    def __init__(self, cost: int, path: list, time: int):\r\n        self.cost = cost\r\n        self.path = path\r\n        self.time = time\r\n\r\n    def is_newer_than(self, other: int):\r\n        return self.time > other\r\n\r\n    def from_str(self, message: str):\r\n        json_value = json.loads(message)\r\n        self.from_map(json_value)\r\n\r\n    def from_map(self, json_value):\r\n        self.cost = int(json_value[\"cost\"])\r\n        self.path = int(json_value[\"path\"])\r\n        self.time = int(json_value[\"time\"])\r\n\r\n    def __str__(self):\r\n        return json.dumps(\r\n            self.as_dict()\r\n        )\r\n\r\n    def __repr__(self):\r\n        return str(self)\r\n\r\n    def __eq__(self, other):\r\n        return self.cost == other.cost and self.path == other.path and self.time == other.time\r\n\r\n    def as_dict(self):\r\n        return {\r\n            \"cost\": self.cost,\r\n            \"path\": self.path,\r\n            \"time\": self.time\r\n        }\r\n\r\n\r\nclass Distance_Vector_Node(Node):\r\n    def __init__(self, id):\r\n        super().__init__(id)\r\n        self.my_dvs = {}\r\n        self.neighbor_dvs = {}\r\n        self.link_costs = {}\r\n\r\n    def __str__(self):\r\n        message = {}\r\n        for key, val in self.my_dvs.items():\r\n            message[\r\n                str((tuple(key)[1], tuple(key)[0])) if tuple(key)[0] == self.id else str(tuple(key))] = val.as_dict()\r\n\r\n        return copy.deepcopy(json.dumps(message))\r\n\r\n    def link_has_been_updated(self, neighbor, latency):\r\n        if latency == -1:\r\n            self.link_costs[neighbor] = (float('inf'), self.get_time())\r\n        else:\r\n            self.link_costs[neighbor] = (latency, self.get_time())\r\n\r\n        self.recompute_dvs()\r\n\r\n    def recompute_dvs(self):\r\n        self.my_dvs = {}\r\n\r\n        for neighbor, value in self.link_costs.items():\r\n            cost = value[0]\r\n            time = value[1]\r\n\r\n            self.my_dvs[frozenset((self.id, neighbor))] = Distance_Vector_Edge(cost=cost, path=[self.id, neighbor],\r\n                                                                               time=time)\r\n\r\n        for key, dv in self.neighbor_dvs.items():\r\n            source = tuple(key)[0]\r\n            destination = tuple(key)[1]\r\n\r\n            if source in self.link_costs and math.isfinite(self.link_costs[source][0]):\r\n                self.recompute_single_dv(src=source, dst=destination, dv=dv)\r\n\r\n            if destination in self.link_costs and math.isfinite(self.link_costs[destination][0]):\r\n                self.recompute_single_dv(src=destination, dst=source, dv=dv)\r\n\r\n        self.broadcast_to_neighbors()\r\n\r\n    def recompute_single_dv(self, src: int, dst: int, dv: Distance_Vector_Edge):\r\n        key = frozenset((self.id, dst))\r\n        new_cost = dv.cost + self.link_costs[src][0]\r\n        if key in self.my_dvs:\r\n            if new_cost < self.my_dvs[key].cost:\r\n                new_path = [self.id] + copy.deepcopy(dv.path)\r\n                self.my_dvs[key] = Distance_Vector_Edge(cost=new_cost, path=new_path, time=dv.time)\r\n        else:\r\n            new_path = [self.id] + copy.deepcopy(dv.path)\r\n            self.my_dvs[key] = Distance_Vector_Edge(cost=new_cost, path=new_path, time=dv.time)\r\n\r\n    def broadcast_to_neighbors(self):\r\n        self.send_to_neighbors(str(self))\r\n        pass\r\n\r\n    # Fill in this function\r\n    def process_incoming_routing_message(self, m):\r\n        _neighbor_dvs = json.loads(m)\r\n\r\n        changed = False\r\n\r\n        for str_key, value in _neighbor_dvs.items():\r\n            key = tuple(map(int, str_key[1:-1].split(',')))\r\n            source = key[0]\r\n            destination = key[1]\r\n            link = Distance_Vector_Edge(cost=value['cost'], path=value['path'], time=value['time'])\r\n\r\n            changed = self.process_neighbor_dv(src=source, dst=destination, dv=link) or changed\r\n\r\n        if changed:\r\n            self.recompute_dvs()\r\n\r\n    def process_neighbor_dv(self, src: int, dst: int, dv: Distance_Vector_Edge):\r\n        key = frozenset((src, dst))\r\n\r\n        if key in self.neighbor_dvs:\r\n            if self.id in dv.path:\r\n                del self.neighbor_dvs[key]\r\n                return True\r\n\r\n            if dv.time > self.neighbor_dvs[key].time:\r\n                self.neighbor_dvs[key] = dv\r\n                return True\r\n            return False\r\n        else:\r\n            if self.id in dv.path:\r\n                return False\r\n            else:\r\n                self.neighbor_dvs[key] = dv\r\n                return True\r\n\r\n    # Return a neighbor, -1 if no path to destination\r\n    def get_next_hop(self, destination):\r\n        # if self.id == 1 and destination == 4:\r\n        #     print(\" \")\r\n        key = frozenset((self.id, destination))\r\n        if key in self.my_dvs:\r\n            if self.my_dvs[key].cost < float('inf'):\r\n                return copy.deepcopy(self.my_dvs[key].path)[1]\r\n\r\n        return -1\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- distance_vector_node.py	(revision 27b11abdc6d4328f104a9ac60cd017cdd8884dd1)
++++ distance_vector_node.py	(date 1605245420256)
+@@ -51,7 +51,9 @@
+ 
+     def __str__(self):
+         message = {}
++
+         for key, val in self.my_dvs.items():
++            print(key)
+             message[
+                 str((tuple(key)[1], tuple(key)[0])) if tuple(key)[0] == self.id else str(tuple(key))] = val.as_dict()
+ 
+@@ -86,16 +88,31 @@
+                 self.recompute_single_dv(src=destination, dst=source, dv=dv)
+ 
+         self.broadcast_to_neighbors()
++        print(self.my_dvs)
+ 
+     def recompute_single_dv(self, src: int, dst: int, dv: Distance_Vector_Edge):
++        key = None
++        new_cost = None
++        if self.id == src:
++            return
++        if self.id == dist:
++            pass
+         key = frozenset((self.id, dst))
+         new_cost = dv.cost + self.link_costs[src][0]
++
++        rev_neighbor_path = []
+         if key in self.my_dvs:
+             if new_cost < self.my_dvs[key].cost:
+-                new_path = [self.id] + copy.deepcopy(dv.path)
++                neighbor_path = copy.deepcopy(dv.path)
++                if neighbor_path[-1] != dst:
++                    rev_neighbor_path = neighbor_path[::-1]
++                new_path = [self.id] + rev_neighbor_path
+                 self.my_dvs[key] = Distance_Vector_Edge(cost=new_cost, path=new_path, time=dv.time)
+         else:
+-            new_path = [self.id] + copy.deepcopy(dv.path)
++            neighbor_path = copy.deepcopy(dv.path)
++            if neighbor_path[-1] != dst:
++                rev_neighbor_path = neighbor_path[::-1]
++            new_path = [self.id] + rev_neighbor_path
+             self.my_dvs[key] = Distance_Vector_Edge(cost=new_cost, path=new_path, time=dv.time)
+ 
+     def broadcast_to_neighbors(self):
+Index: .idea/Project3.iml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<module type=\"PYTHON_MODULE\" version=\"4\">\r\n  <component name=\"NewModuleRootManager\">\r\n    <content url=\"file://$MODULE_DIR$\">\r\n      <excludeFolder url=\"file://$MODULE_DIR$/venv\" />\r\n    </content>\r\n    <orderEntry type=\"jdk\" jdkName=\"Python 3.7 (Project3)\" jdkType=\"Python SDK\" />\r\n    <orderEntry type=\"sourceFolder\" forTests=\"false\" />\r\n  </component>\r\n</module>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- .idea/Project3.iml	(revision 27b11abdc6d4328f104a9ac60cd017cdd8884dd1)
++++ .idea/Project3.iml	(date 1604854075895)
+@@ -4,7 +4,7 @@
+     <content url="file://$MODULE_DIR$">
+       <excludeFolder url="file://$MODULE_DIR$/venv" />
+     </content>
+-    <orderEntry type="jdk" jdkName="Python 3.7 (Project3)" jdkType="Python SDK" />
++    <orderEntry type="jdk" jdkName="Python 3.7" jdkType="Python SDK" />
+     <orderEntry type="sourceFolder" forTests="false" />
+   </component>
+ </module>
+\ No newline at end of file
+Index: .idea/misc.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"JavaScriptSettings\">\r\n    <option name=\"languageLevel\" value=\"ES6\" />\r\n  </component>\r\n  <component name=\"ProjectRootManager\" version=\"2\" project-jdk-name=\"Python 3.7 (Project3)\" project-jdk-type=\"Python SDK\" />\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- .idea/misc.xml	(revision 27b11abdc6d4328f104a9ac60cd017cdd8884dd1)
++++ .idea/misc.xml	(date 1604854075931)
+@@ -3,5 +3,5 @@
+   <component name="JavaScriptSettings">
+     <option name="languageLevel" value="ES6" />
+   </component>
+-  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.7 (Project3)" project-jdk-type="Python SDK" />
++  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.7" project-jdk-type="Python SDK" />
+ </project>
+\ No newline at end of file

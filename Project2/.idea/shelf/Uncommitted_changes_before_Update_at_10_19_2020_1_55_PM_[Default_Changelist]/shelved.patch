@@ -1,0 +1,58 @@
+Index: test.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import sys\r\n\r\nimport lossy_socket\r\nfrom streamer import Streamer\r\n\r\nNUMS = 200\r\n\r\n\r\ndef receive(s):\r\n    expected = 0\r\n    str_buf = \"\"\r\n    while expected < NUMS:\r\n        data = s.recv()\r\n        print(\"recv returned {%s}\" % data.decode('utf-8'))\r\n        str_buf += data.decode('utf-8')\r\n        for t in str_buf.split(\" \"):\r\n            if len(t) == 0:\r\n                # there could be a \"\" at the start or the end, if a space is there\r\n                continue\r\n            if int(t) == expected:\r\n                print(\"got %d!\" % expected)\r\n                expected += 1\r\n                str_buf = ''\r\n            elif int(t) > expected:\r\n                print(\"ERROR: got %s but was expecting %d\" % (t, expected))\r\n                sys.exit(-1)\r\n            else:\r\n                # we only received the first part of the number at the end\r\n                # we must leave it in the buffer and read more.\r\n                str_buf = t\r\n                break\r\n\r\n\r\ndef host1(listen_port, remote_port):\r\n    s = Streamer(dst_ip=\"localhost\", dst_port=remote_port,\r\n                 src_ip=\"localhost\", src_port=listen_port)\r\n    receive(s)\r\n    print(\"STAGE 1 TEST PASSED!\")\r\n    # send large chunks of data\r\n    i = 0\r\n    buf = \"\"\r\n    while i < NUMS:\r\n        buf += (\"%d \" % i)\r\n        if len(buf) > 12345 or i == NUMS - 1:\r\n            print(\"sending {%s}\" % buf)\r\n            s.send(buf.encode('utf-8'))\r\n            buf = \"\"\r\n        i += 1\r\n    s.close()\r\n    print(\"CHECK THE OTHER SCRIPT FOR STAGE 2 RESULTS.\")\r\n\r\n\r\ndef host2(listen_port, remote_port):\r\n    s = Streamer(dst_ip=\"localhost\", dst_port=remote_port,\r\n                 src_ip=\"localhost\", src_port=listen_port)\r\n    # send small pieces of data\r\n    for i in range(NUMS):\r\n        buf = (\"%d \" % i)\r\n        print(\"sending {%s}\" % buf)\r\n        s.send(buf.encode('utf-8'))\r\n    receive(s)\r\n    s.close()\r\n    print(\"STAGE 2 TEST PASSED!\")\r\n\r\n\r\ndef main():\r\n    lossy_socket.sim = lossy_socket.SimulationParams(loss_rate=0.0, corruption_rate=0.0,\r\n                                                     max_delivery_delay=0.1,\r\n                                                     become_reliable_after=100000.0)\r\n\r\n    if len(sys.argv) < 4:\r\n        print(\"usage is: python3 test.py [port1] [port2] [1|2]\")\r\n        print(\"First run with last argument set to 1, then with 2 (in two different terminals on the same machine\")\r\n        sys.exit(-1)\r\n    port1 = int(sys.argv[1])\r\n    port2 = int(sys.argv[2])\r\n\r\n    if sys.argv[3] == \"1\":\r\n        host1(port1, port2)\r\n    elif sys.argv[3] == \"2\":\r\n        host2(port2, port1)\r\n    else:\r\n        print(\"Unexpected last argument: \" + sys.argv[2])\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    main()\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- test.py	(revision 403a468ad97b3a36b056f61fb14dc43b67920d11)
++++ test.py	(date 1603055155577)
+@@ -64,9 +64,9 @@
+ 
+ 
+ def main():
+-    lossy_socket.sim = lossy_socket.SimulationParams(loss_rate=0.0, corruption_rate=0.0,
+-                                                     max_delivery_delay=0.1,
+-                                                     become_reliable_after=100000.0)
++    lossy_socket.sim = lossy_socket.SimulationParams(loss_rate=0.1, corruption_rate=0.0,
++                                                     max_delivery_delay=0.0,
++                                                     become_reliable_after=10.0)
+ 
+     if len(sys.argv) < 4:
+         print("usage is: python3 test.py [port1] [port2] [1|2]")
+Index: .idea/Project2.iml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<module type=\"PYTHON_MODULE\" version=\"4\">\r\n  <component name=\"NewModuleRootManager\">\r\n    <content url=\"file://$MODULE_DIR$\">\r\n      <excludeFolder url=\"file://$MODULE_DIR$/venv\" />\r\n    </content>\r\n    <orderEntry type=\"inheritedJdk\" />\r\n    <orderEntry type=\"sourceFolder\" forTests=\"false\" />\r\n  </component>\r\n</module>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- .idea/Project2.iml	(revision 403a468ad97b3a36b056f61fb14dc43b67920d11)
++++ .idea/Project2.iml	(date 1603046183147)
+@@ -4,7 +4,7 @@
+     <content url="file://$MODULE_DIR$">
+       <excludeFolder url="file://$MODULE_DIR$/venv" />
+     </content>
+-    <orderEntry type="inheritedJdk" />
++    <orderEntry type="jdk" jdkName="Python 3.7" jdkType="Python SDK" />
+     <orderEntry type="sourceFolder" forTests="false" />
+   </component>
+ </module>
+\ No newline at end of file
+Index: .idea/misc.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"JavaScriptSettings\">\r\n    <option name=\"languageLevel\" value=\"ES6\" />\r\n  </component>\r\n  <component name=\"ProjectRootManager\" version=\"2\" project-jdk-name=\"Python 3.7 (Project2)\" project-jdk-type=\"Python SDK\" />\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- .idea/misc.xml	(revision 403a468ad97b3a36b056f61fb14dc43b67920d11)
++++ .idea/misc.xml	(date 1603046183161)
+@@ -3,5 +3,5 @@
+   <component name="JavaScriptSettings">
+     <option name="languageLevel" value="ES6" />
+   </component>
+-  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.7 (Project2)" project-jdk-type="Python SDK" />
++  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.7" project-jdk-type="Python SDK" />
+ </project>
+\ No newline at end of file
