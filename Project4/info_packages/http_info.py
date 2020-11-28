@@ -43,7 +43,7 @@ class HttpInfo:
     @staticmethod
     def get_header(response: client.HTTPResponse, header: str):
         for h in response.getheaders():
-            if h[0] == header:
+            if h[0].lower() == header.lower():
                 return h[1]
 
         return None

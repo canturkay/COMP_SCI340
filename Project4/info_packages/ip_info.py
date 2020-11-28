@@ -16,19 +16,19 @@ def ns_lookup(ws: str, ipv6: bool = False) -> str:
 
 def get_ipv4_info(ws: str) -> str:
     res = ns_lookup(ws)
-    addresses = get_addresses(res, ipv6=False)
+    addresses = get_addresses(res, ipv4=True)
 
     return addresses
 
 
 def get_ipv6_info(ws: str) -> str:
     res = ns_lookup(ws, ipv6=True)
-    addresses = get_addresses(res, ipv4=False)
+    addresses = get_addresses(res, ipv6=True)
 
     return addresses
 
 
-def get_addresses(lookup_res: str, ipv4: bool = True, ipv6: bool = True) -> list:
+def get_addresses(lookup_res: str, ipv4: bool = False, ipv6: bool = False) -> list:
     address_line = lookup_res.split("Name:")[1]
 
     if ':' not in address_line:
@@ -50,4 +50,4 @@ def get_addresses(lookup_res: str, ipv4: bool = True, ipv6: bool = True) -> list
 
 
 def get_ip_info(ws: str) -> tuple:
-    return get_ipv6_info(ws=ws), get_ipv6_info(ws=ws)
+    return get_ipv4_info(ws=ws), get_ipv6_info(ws=ws)
