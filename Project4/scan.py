@@ -28,7 +28,7 @@ def main():
         website_scans[ws] = single_website
 
     # write_to_file(website_scans)
-    print(website_scans)
+    print(json.dump(website_scans, f, sort_keys=True, indent=4))
 
 
 def write_to_file(content):
