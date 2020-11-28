@@ -21,7 +21,7 @@ class HttpInfo:
             else:
                 break
 
-        pass    
+        pass
 
     @staticmethod
     def get_location_header(response: client.HTTPResponse):
@@ -32,7 +32,7 @@ class HttpInfo:
         return None
 
     def get_http(self) -> client.HTTPResponse:
-        connection = client.HTTPConnection(self.url, timeout=2)
+        connection = client.HTTPConnection(self.get_hostname(self.url), timeout=2)
         connection.request(method="GET", url=self.url)
 
         response = connection.getresponse()
@@ -42,7 +42,7 @@ class HttpInfo:
         return response
 
     def get_https(self) -> client.HTTPResponse:
-        connection = client.HTTPSConnection(self.url, timeout=2)
+        connection = client.HTTPSConnection(self.get_hostname(self.url), timeout=2)
         connection.request(method="GET", url=self.url)
 
         response = connection.getresponse()
@@ -50,3 +50,10 @@ class HttpInfo:
         connection.close()
 
         return response
+
+    @staticmethod
+    def get_hostname(url: str) -> str:
+        if 'http' in url:
+            url.split(':')[1][2:]
+        else:
+            return url
