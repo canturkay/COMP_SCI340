@@ -54,6 +54,6 @@ class HttpInfo:
     @staticmethod
     def get_hostname(url: str) -> str:
         if 'http' in url:
-            url.split(':')[1][2:]
+            return url.split(':')[1][2:]
         else:
             return url
