@@ -10,7 +10,7 @@ class HttpInfo:
     def get_info(self):
         response = self.get_http()
 
-        while 300 <= response.status < 400:
+        while 300 <= response.status < 310:
             self.url = self.get_location_header(response)
 
             if self.url is not None:
