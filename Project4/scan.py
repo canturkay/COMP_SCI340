@@ -22,6 +22,8 @@ def main():
         single_website["ipv4_addresses"], single_website["ipv6_addresses"] = get_ip_info(ws)
 
         http_info = HttpInfo(ws=ws)
+        single_website["http_server"], single_website["insecure_http"], \
+            single_website["redirect_to_https"] = http_info.get_info()
 
         website_scans[ws] = single_website
 

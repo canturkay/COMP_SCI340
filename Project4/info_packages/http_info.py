@@ -4,30 +4,47 @@ from http import client
 class HttpInfo:
     def __init__(self, ws: str):
         self.url = ws
-        self.get_info()
-        pass
 
-    def get_info(self):
-        response = self.get_http()
+    def get_info(self) -> tuple:
+        http_server = None
+        insecure_http = True
+        redirect_to_https = False
 
-        while 300 <= response.status < 310:
-            self.url = self.get_location_header(response)
+        try:
+            response = self.get_http()
+            http_server = self.get_header(response=response, header="Server")
 
-            if self.url is not None:
-                if len(self.url) > 8 and self.url[0:8] == "https://":
-                    response = self.get_https()
+            redirect_count = 0
+
+            while 300 <= response.status < 310 and redirect_count < 10:
+                self.url = self.get_header(response=response, header="Location")
+
+                if self.url is not None:
+                    if len(self.url) > 8 and self.url[0:8] == "https://":
+                        redirect_to_https = True
+                        break
+                        # response = self.get_https()
+                    else:
+                        response = self.get_http()
                 else:
-                    response = self.get_http()
-            else:
-                break
+                    break
 
-        pass
+                redirect_count += 1
+        except:
+            insecure_http = False
+            try:
+                response = self.get_https()
+                http_server = self.get_header(response=response, header="Server")
+            except:
+                pass
+
+        return http_server, insecure_http, redirect_to_https
 
     @staticmethod
-    def get_location_header(response: client.HTTPResponse):
-        for header in response.getheaders():
-            if header[0] == "Location":
-                return header[1]
+    def get_header(response: client.HTTPResponse, header: str):
+        for h in response.getheaders():
+            if h[0] == header:
+                return h[1]
 
         return None
 
