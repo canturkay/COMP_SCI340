@@ -26,7 +26,7 @@ def main():
             single_website["redirect_to_https"], single_website["hsts"] = http_info.get_info()
 
         website_scans[ws] = single_website
-    print(website_scans)
+    print(json.dumps(website_scans, indent=4, sort_keys=True))
     # write_to_file(website_scans)
     #print(json.dump(website_scans, f, sort_keys=True, indent=4))
 
