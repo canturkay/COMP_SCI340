@@ -9,6 +9,7 @@ class HttpInfo:
         http_server = None
         insecure_http = True
         redirect_to_https = False
+        hsts = False
 
         try:
             response = self.get_http()
@@ -35,10 +36,15 @@ class HttpInfo:
             try:
                 response = self.get_https()
                 http_server = self.get_header(response=response, header="Server")
+                hsts_res = self.get_header(response=response, header="Strict-Transport-Security")
+                if hsts_res is None:
+                    hsts = False
+                else:
+                    hsts = True
             except:
                 pass
 
-        return http_server, insecure_http, redirect_to_https
+        return http_server, insecure_http, redirect_to_https, hsts
 
     @staticmethod
     def get_header(response: client.HTTPResponse, header: str):

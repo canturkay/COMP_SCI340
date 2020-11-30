@@ -23,7 +23,7 @@ def main():
 
         http_info = HttpInfo(ws=ws)
         single_website["http_server"], single_website["insecure_http"], \
-            single_website["redirect_to_https"] = http_info.get_info()
+            single_website["redirect_to_https"], single_website["hsts"] = http_info.get_info()
 
         website_scans[ws] = single_website
     print(website_scans)
