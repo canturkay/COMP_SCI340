@@ -28,7 +28,7 @@ def main():
 
         tls_info = TLSInfo(url=ws)
 
-        single_website['tls_versions'] = tls_info.get_info()
+        single_website['tls_versions'], single_website['root_ca'] = tls_info.get_info()
 
         website_scans[ws] = single_website
     print(json.dumps(website_scans, indent=4))

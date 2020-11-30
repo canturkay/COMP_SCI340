@@ -9,7 +9,7 @@ class TLSInfo:
         try:
             response = self.get_nmap()
         except Exception as ex:
-            print("nmap error", ex)
+            # print("nmap error", ex)
             response = ""
 
         result = []
@@ -24,14 +24,28 @@ class TLSInfo:
         try:
             response = self.get_openssl()
         except Exception as ex:
-            print("openssl error", ex)
+            # print("openssl error", ex)
             response = ""
 
         if 'New, TLSv1.3, Cipher' in response:
             result.append('TLSv1.3')
 
-        print(self.url, result)
-        return result
+        ca_arg = None
+        if response is not None and len(result) > 0:
+            lines = response.splitlines()
+            ca_line = None
+            for line in lines:
+                if 'depth=2' in line:
+                    ca_line = line
+                    break
+
+            if ca_line is not None:
+                for arg in ca_line.split(','):
+                    if ' O = ' in arg:
+                        ca_arg = arg.split(' O = ')[1]
+                        break
+
+        return result, ca_arg
 
     def get_nmap(self):
         req = "nmap --script ssl-enum-ciphers -p 443 " + self.url
@@ -39,6 +53,6 @@ class TLSInfo:
                                    timeout=15, stderr=subprocess.STDOUT, shell=True).decode("utf-8")
 
     def get_openssl(self):
-        req = "echo | openssl s_client -tls1_3 -connect " + self.url + ":443"
+        req = "echo | openssl s_client -connect " + self.url + ":443"
         return subprocess.check_output(req,
                                    timeout=15, stderr=subprocess.STDOUT, shell=True).decode("utf-8")
