@@ -1,9 +1,10 @@
-from http import client
-
+from requests import Response, Session
 
 class HttpInfo:
     def __init__(self, ws: str):
         self.url = ws
+        self.session = Session()
+        self.session.max_redirects = 10
 
     def get_info(self) -> tuple:
         http_server = None
@@ -13,66 +14,69 @@ class HttpInfo:
 
         try:
             response = self.get_http()
-            http_server = self.get_header(response=response, header="Server")
 
-            redirect_count = 0
+            if 300 <= response.status_code < 310:
+                raise Exception("Redirected more than 10 times")
 
-            while 300 <= response.status < 310 and redirect_count < 10:
-                self.url = self.get_header(response=response, header="Location")
+            if response.url[:8] == 'https://':
+                redirect_to_https = True
 
-                if self.url is not None:
-                    if len(self.url) > 8 and self.url[0:8] == "https://":
-                        redirect_to_https = True
-                        break
-                        # response = self.get_https()
-                    else:
-                        response = self.get_http()
-                else:
-                    break
+            http_server, hsts = self.process_response(response=response)
 
-                redirect_count += 1
-        except:
-            insecure_http = False
-            try:
-                response = self.get_https()
-                http_server = self.get_header(response=response, header="Server")
-                hsts_res = self.get_header(response=response, header="Strict-Transport-Security")
-                if hsts_res is None:
-                    hsts = False
-                else:
-                    hsts = True
-            except:
-                pass
+        except Exception as ex:
+            if ex is not Exception("Redirected more than 10 times"):
+                insecure_http = False
+                try:
+                    response = self.get_https()
+
+                    http_server, hsts = self.process_response(response=response)
+                except:
+                    pass
 
         return http_server, insecure_http, redirect_to_https, hsts
 
+    def process_response(self, response: Response):
+        http_server = response.headers.get(key='Server')
+        hsts_res = response.headers.get(key="Strict-Transport-Security")
+
+        if hsts_res is None:
+            hsts = False
+        else:
+            hsts = True
+
+        return http_server, hsts
+
+    def get_https_info(self, http_server: str, hsts: bool):
+        response = None
+        try:
+            response = self.get_https()
+
+            http_server = self.get_header(response=response, header="Server")
+
+            hsts_res = self.get_header(response=response, header="Strict-Transport-Security")
+
+            if hsts_res is None:
+                hsts = False
+            else:
+                hsts = True
+        except Exception as ex:
+            print(ex)
+
+        return http_server, hsts, response
+
     @staticmethod
-    def get_header(response: client.HTTPResponse, header: str):
-        for h in response.getheaders():
+    def get_header(response: Response, header: str):
+        for h in response.headers:
             if h[0].lower() == header.lower():
                 return h[1]
 
         return None
 
-    def get_http(self) -> client.HTTPResponse:
-        connection = client.HTTPConnection(self.get_hostname(self.url), timeout=2)
-        connection.request(method="GET", url=self.get_hostname(self.url))
+    def get_http(self) -> Response:
+        return self.session.get('http://' + self.get_hostname(self.url))
 
-        response = connection.getresponse()
-
-        connection.close()
-
-        return response
-
-    def get_https(self) -> client.HTTPResponse:
-        connection = client.HTTPSConnection(self.get_hostname(self.url), timeout=2)
-        connection.request(method="GET", url=self.get_hostname(self.url))
-
-        response = connection.getresponse()
-
-        connection.close()
-
-        return response
+    def get_https(self) -> Response:
+        return self.session.get('https://' + self.get_hostname(self.url))
 
     @staticmethod
     def get_hostname(url: str) -> str:
