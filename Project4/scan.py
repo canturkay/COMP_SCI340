@@ -2,6 +2,7 @@ import json
 import sys
 import time
 
+from info_packages.dns_info import DNSInfo
 from info_packages.http_info import HttpInfo
 from info_packages.ip_info import get_ip_info
 from info_packages.tls_info import TLSInfo
@@ -20,15 +21,19 @@ def main():
         single_website = {}
         single_website["scan_time"] = time.time()
 
-        # single_website["ipv4_addresses"], single_website["ipv6_addresses"] = get_ip_info(ws)
+        single_website["ipv4_addresses"], single_website["ipv6_addresses"] = get_ip_info(ws)
         #
         # http_info = HttpInfo(ws=ws)
         # single_website["http_server"], single_website["insecure_http"], \
         #     single_website["redirect_to_https"], single_website["hsts"] = http_info.get_info()
 
-        tls_info = TLSInfo(url=ws)
+        # tls_info = TLSInfo(url=ws)
+        #
+        # single_website['tls_versions'], single_website['root_ca'] = tls_info.get_info()
 
-        single_website['tls_versions'], single_website['root_ca'] = tls_info.get_info()
+        dns_info = DNSInfo(ips=single_website["ipv4_addresses"])
+
+        single_website['rdns_names'] = dns_info.get_info()
 
         website_scans[ws] = single_website
     print(json.dumps(website_scans, indent=4))
