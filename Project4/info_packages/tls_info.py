@@ -35,7 +35,7 @@ class TLSInfo:
             lines = response.splitlines()
             ca_line = None
             for line in lines:
-                if 'depth=2' in line:
+                if 'depth=' in line:
                     ca_line = line
                     break
 

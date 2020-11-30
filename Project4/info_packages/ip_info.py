@@ -8,10 +8,10 @@ def ns_lookup(ws: str, ipv6: bool = False) -> str:
         req.append("-type=AAAA")
 
     req.append(ws)
-    req.append("8.8.8.8")
+    req.append("208.67.222.222")
 
     return subprocess.check_output(req,
-                                   timeout=2, stderr=subprocess.STDOUT, shell=True).decode("utf-8")
+                                   timeout=5, stderr=subprocess.STDOUT, shell=True).decode("utf-8")
 
 
 def get_ipv4_info(ws: str) -> str:
