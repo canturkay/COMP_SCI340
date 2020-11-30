@@ -28,7 +28,7 @@ def main():
 
         tls_info = TLSInfo(url=ws)
 
-        single_website['tls_info'] = tls_info.get_info()
+        single_website['tls_versions'] = tls_info.get_info()
 
         website_scans[ws] = single_website
     print(json.dumps(website_scans, indent=4))
@@ -41,9 +41,6 @@ def write_to_file(content):
     file_name = sys.argv[2]
     with open(file_name, "w") as f:
         json.dump(json_object, f, sort_keys=True, indent=4)
-
-
-
 
 
 if __name__ == '__main__':
