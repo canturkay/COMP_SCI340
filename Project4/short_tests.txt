@@ -1,3 +1,4 @@
+amazon.com
 youtube.com
 twitter.com
 en.wikipedia.org
