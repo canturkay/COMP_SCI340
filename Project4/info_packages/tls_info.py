@@ -53,7 +53,7 @@ class TLSInfo:
             return subprocess.check_output(req,
                                        timeout=10, stderr=subprocess.STDOUT).decode("utf-8")
         except:
-            if repeat < 3:
+            if repeat < 2:
                 return self.get_nmap(repeat=repeat+1)
             else:
                 return ""
@@ -64,7 +64,7 @@ class TLSInfo:
             return subprocess.check_output(req,
                                        timeout=3, stderr=subprocess.STDOUT).decode("utf-8")
         except:
-            if repeat < 3:
+            if repeat < 2:
                 return self.get_openssl(repeat=repeat+1)
             else:
                 return ""
