@@ -19,7 +19,6 @@ class RTTInfo:
                     min_val = min(min_val, duration_val)
                     max_val = max(max_val, duration_val)
                 except Exception as ex:
-                    print(ex)
                     pass
 
         if math.isinf(min_val) or math.isinf(max_val):
@@ -35,7 +34,7 @@ class RTTInfo:
     def get_rtt_message(self, ip: str, repeat: int = 0, port: str = '443'):
         try:
             req = 'sh -c "time echo -e \'\\x1dclose\\x0d\' | telnet ' + ip + ' ' + port + '"'
-            return subprocess.run(req,timeout=3, shell=True).stderr.decode("utf-8")
+            return subprocess.run(req, timeout=3, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stderr.decode("utf-8")
         except Exception as ex:
             print(ex)
             if repeat < 3:
