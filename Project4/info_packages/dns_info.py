@@ -25,7 +25,7 @@ class DNSInfo:
     def ns_lookup(self, ip: str, repeat: int = 0) -> str:
         try:
             return subprocess.check_output('nslookup ' + ip,
-                                           timeout=2, stderr=subprocess.STDOUT).decode("utf-8")
+                                           timeout=2, stderr=subprocess.STDOUT, shell=True).decode("utf-8")
         except:
             if repeat < 2:
                 return self.ns_lookup(ip=ip, repeat=repeat+1)
