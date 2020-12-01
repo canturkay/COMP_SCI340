@@ -24,6 +24,6 @@ class DNSInfo:
                                            timeout=2, stderr=subprocess.STDOUT, shell=True).decode("utf-8")
         except:
             if repeat < 3:
-                return self.ns_lookup(ip=ip)
+                return self.ns_lookup(ip=ip, repeat=repeat+1)
             else:
                 return None
