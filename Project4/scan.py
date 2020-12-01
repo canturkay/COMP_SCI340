@@ -60,7 +60,7 @@ def write_to_file(content):
     print(json_object)
     file_name = sys.argv[2]
     with open(file_name, "w") as f:
-        json.dump(json_object, f, sort_keys=True, indent=4)
+        json.dump(content, f, sort_keys=True, indent=4)
 
 
 if __name__ == '__main__':
