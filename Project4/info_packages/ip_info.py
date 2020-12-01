@@ -21,6 +21,7 @@ def ns_lookup(ws: str, ipv6: bool = False, repeat: int = 0) -> str:
 
 def get_ipv4_info(ws: str) -> str:
     res = ns_lookup(ws)
+    print(res)
     if res:
         return get_addresses(res, ipv4=True)
 

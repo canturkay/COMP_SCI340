@@ -5,7 +5,7 @@ class RTTInfo:
     def __init__(self, ips: list):
         self.ips = ips
 
-    def get_info(self) -> list:
+    def get_info(self, port='443') -> list:
         min_val = float('inf')
         max_val = float('-inf')
 
@@ -22,13 +22,18 @@ class RTTInfo:
                     pass
 
         if math.isinf(min_val) or math.isinf(max_val):
-            return None
+            if port == '443':
+                return self.get_info(port='80')
+            elif port == '80':
+                return self.get_info(port='22')
+            else:
+                return None
         else:
             return [min_val, max_val]
 
-    def get_rtt_message(self, ip: str, repeat: int = 0):
+    def get_rtt_message(self, ip: str, repeat: int = 0, port: str = '443'):
         try:
-            req = 'sh -c "time echo -e \'\\x1dclose\\x0d\' | telnet ' + ip + ' 443"'
+            req = 'sh -c "time echo -e \'\\x1dclose\\x0d\' | telnet ' + ip + ' ' + port + '"'
             return subprocess.run(req,timeout=3, shell=True, capture_output=True).stderr.decode("utf-8")
         except Exception as ex:
             if repeat < 3:
