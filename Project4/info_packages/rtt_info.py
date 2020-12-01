@@ -1,5 +1,6 @@
-import subprocess
 import math
+import subprocess
+
 
 class RTTInfo:
     def __init__(self, ips: list):
@@ -34,10 +35,11 @@ class RTTInfo:
     def get_rtt_message(self, ip: str, repeat: int = 0, port: str = '443'):
         try:
             req = 'sh -c "time echo -e \'\\x1dclose\\x0d\' | telnet ' + ip + ' ' + port + '"'
-            return subprocess.run(req, timeout=3, shell=True, stderr=subprocess.STDOUT).stdout.decode("utf-8")
+            return subprocess.run(req, timeout=3, shell=True, stderr=subprocess.STDOUT,
+                                  stdout=subprocess.PIPE).stdout.decode("utf-8")
         except Exception as ex:
             print(ex)
             if repeat < 3:
-                return self.get_rtt_message(ip=ip, repeat=repeat+1)
+                return self.get_rtt_message(ip=ip, repeat=repeat + 1)
             else:
                 return None
