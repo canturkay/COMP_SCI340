@@ -2,13 +2,13 @@ import subprocess
 
 
 def ns_lookup(ws: str, ipv6: bool = False, repeat: int = 0) -> str:
-    req = []
-    req.append("nslookup")
+    req = "nslookup"
     if ipv6:
-        req.append("-type=AAAA")
+        req += " -type=AAAA"
 
-    req.append(ws)
-    req.append("208.67.222.222")
+    req += ' ' + ws
+    req += " 208.67.222.222"
+    print(req)
     try:
             return subprocess.check_output(req,
                                             timeout=3, stderr=subprocess.STDOUT, shell=True).decode("utf-8")
