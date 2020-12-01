@@ -10,7 +10,7 @@ def ns_lookup(ws: str, ipv6: bool = False, repeat: int = 0) -> str:
     req += " 208.67.222.222"
     try:
             return subprocess.check_output(req,
-                                            timeout=3, stderr=subprocess.STDOUT, shell=True).decode("utf-8")
+                                            timeout=3, stderr=subprocess.STDOUT).decode("utf-8")
     except Exception as ex:
         if repeat < 2:
             return ns_lookup(ws=ws, ipv6=ipv6, repeat=repeat+1)

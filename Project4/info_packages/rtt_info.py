@@ -35,7 +35,7 @@ class RTTInfo:
     def get_rtt_message(self, ip: str, repeat: int = 0, port: str = '443'):
         try:
             req = 'sh -c "time echo -e \'\\x1dclose\\x0d\' | telnet ' + ip + ' ' + port + '"'
-            return subprocess.run(req, timeout=3, shell=True, stderr=subprocess.STDOUT,
+            return subprocess.run(req, timeout=3, stderr=subprocess.STDOUT,
                                   stdout=subprocess.PIPE).stdout.decode("utf-8")
         except Exception as ex:
             if repeat < 2:
