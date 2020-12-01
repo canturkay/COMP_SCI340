@@ -12,7 +12,7 @@ class DNSInfo:
             if res:
                 for line in res.splitlines():
                     if 'name =' in line:
-                        name = line.split('name =')[1].strip(' \t\r\n')
+                        name = line.split('name =')[1].strip(' \t\r\n')[:-1]
                         if name not in names:
                             names.append(name)
                     elif 'Name:' in line:
