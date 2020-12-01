@@ -36,7 +36,7 @@ class RTTInfo:
         try:
             req = 'sh -c "time echo -e \'\\x1dclose\\x0d\' | telnet ' + ip + ' ' + port + '"'
             return subprocess.check_output(req, timeout=2,
-                                  stderr=subprocess.STDOUT).decode("utf-8")
+                                  stderr=subprocess.STDOUT, shell=True).decode("utf-8")
         except subprocess.CalledProcessError as e:
             return e.output.decode("utf-8")
         except Exception as ex:
