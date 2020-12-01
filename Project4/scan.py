@@ -52,9 +52,7 @@ def main():
 
     geo_info.reader.close()
 
-    print(json.dumps(website_scans, indent=4))
-    # write_to_file(website_scans)
-    #print(json.dump(website_scans, f, sort_keys=True, indent=4))
+    write_to_file(website_scans)
 
 
 def write_to_file(content):

@@ -18,7 +18,8 @@ class RTTInfo:
                     duration_val = float(duration_text[2:-1])
                     min_val = min(min_val, duration_val)
                     max_val = max(max_val, duration_val)
-                except:
+                except Exception as ex:
+                    print(ex)
                     pass
 
         if math.isinf(min_val) or math.isinf(max_val):
