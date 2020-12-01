@@ -8,12 +8,10 @@ def ns_lookup(ws: str, ipv6: bool = False, repeat: int = 0) -> str:
 
     req += ' ' + ws
     req += " 208.67.222.222"
-    print(req)
     try:
             return subprocess.check_output(req,
                                             timeout=3, stderr=subprocess.STDOUT, shell=True).decode("utf-8")
     except Exception as ex:
-        print(ex)
         if repeat < 3:
             return ns_lookup(ws=ws, ipv6=ipv6, repeat=repeat+1)
         else:
@@ -22,7 +20,6 @@ def ns_lookup(ws: str, ipv6: bool = False, repeat: int = 0) -> str:
 
 def get_ipv4_info(ws: str) -> str:
     res = ns_lookup(ws)
-    print(res)
     if res:
         return get_addresses(res, ipv4=True)
 
@@ -38,7 +35,7 @@ def get_ipv6_info(ws: str) -> str:
 
 
 def get_addresses(lookup_res: str, ipv4: bool = False, ipv6: bool = False) -> list:
-    if "Can't find" in lookup_res:
+    if "Name" not in lookup_res:
         return []
 
     address_line = lookup_res.split("Name:")[1]
