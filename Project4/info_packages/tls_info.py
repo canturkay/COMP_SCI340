@@ -56,7 +56,7 @@ class TLSInfo:
             if repeat < 3:
                 return self.get_nmap(repeat=repeat+1)
             else:
-                return None
+                return ""
 
     def get_openssl(self, repeat: int = 0) -> str:
         try:
@@ -67,4 +67,4 @@ class TLSInfo:
             if repeat < 3:
                 return self.get_openssl(repeat=repeat+1)
             else:
-                return None
+                return ""
