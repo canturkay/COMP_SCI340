@@ -38,22 +38,20 @@ def get_addresses(lookup_res: str, ipv4: bool = False, ipv6: bool = False) -> li
     if "Name" not in lookup_res:
         return []
 
-    address_line = lookup_res.split("Name:")[1]
-
-    if ':' not in address_line:
-        return []
-
-    addresses = address_line.split(":", 1)[1].splitlines()
-    ips_rev = [i.strip(" \r\n\t") for i in addresses]
-
     res = []
 
-    for address in ips_rev:
-        if address != '':
-            if ':' in address and address[0].isnumeric() and ipv6:
-                res.append(address)
-            if '.' in address and address[0].isnumeric() and ipv4:
-                res.append(address)
+    address_lines = lookup_res.split("Name:")[1:]
+    for address_line in address_lines:
+        if ':' in address_line:
+            addresses = address_line.split(":", 1)[1].splitlines()
+            ips_rev = [i.strip(" \r\n\t") for i in addresses]
+
+            for address in ips_rev:
+                if address != '':
+                    if ':' in address and address[0].isnumeric() and ipv6 and address not in res:
+                        res.append(address)
+                    if '.' in address and address[0].isnumeric() and ipv4 and address not in res:
+                        res.append(address)
 
     return res
 
