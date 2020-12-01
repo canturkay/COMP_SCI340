@@ -38,6 +38,9 @@ def get_ipv6_info(ws: str) -> str:
 
 
 def get_addresses(lookup_res: str, ipv4: bool = False, ipv6: bool = False) -> list:
+    if "Can't find" in lookup_res:
+        return []
+
     address_line = lookup_res.split("Name:")[1]
 
     if ':' not in address_line:
