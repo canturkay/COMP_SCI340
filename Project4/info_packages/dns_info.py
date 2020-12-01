@@ -11,7 +11,11 @@ class DNSInfo:
             res = self.ns_lookup(ip=ip)
             if res:
                 for line in res.splitlines():
-                    if 'Name:' in line:
+                    if 'name =' in line:
+                        name = line.split('name =')[1].strip(' \t\r\n')
+                        if name not in names:
+                            names.append(name)
+                    elif 'Name:' in line:
                         name = line.split('Name:')[1].strip(' \t\r\n')
                         if name not in names:
                             names.append(name)
