@@ -5,7 +5,7 @@ class TLSInfo:
     def __init__(self, url: str):
         self.url = url
 
-    def get_info(self):
+    def get_info(self) -> tuple:
         try:
             response = self.get_nmap()
         except Exception as ex:
@@ -47,12 +47,24 @@ class TLSInfo:
 
         return result, ca_arg
 
-    def get_nmap(self):
-        req = "nmap --script ssl-enum-ciphers -p 443 " + self.url
-        return subprocess.check_output(req,
-                                   timeout=15, stderr=subprocess.STDOUT, shell=True).decode("utf-8")
+    def get_nmap(self, repeat: int = 0) -> str:
+        try:
+            req = "nmap --script ssl-enum-ciphers -p 443 " + self.url
+            return subprocess.check_output(req,
+                                       timeout=15, stderr=subprocess.STDOUT, shell=True).decode("utf-8")
+        except:
+            if repeat < 3:
+                return self.get_nmap(repeat=repeat+1)
+            else:
+                return None
 
-    def get_openssl(self):
-        req = "echo | openssl s_client -connect " + self.url + ":443"
-        return subprocess.check_output(req,
-                                   timeout=15, stderr=subprocess.STDOUT, shell=True).decode("utf-8")
+    def get_openssl(self, repeat: int = 0) -> str:
+        try:
+            req = "echo | openssl s_client -connect " + self.url + ":443"
+            return subprocess.check_output(req,
+                                       timeout=15, stderr=subprocess.STDOUT, shell=True).decode("utf-8")
+        except:
+            if repeat < 3:
+                return self.get_openssl(repeat=repeat+1)
+            else:
+                return None

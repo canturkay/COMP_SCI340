@@ -1,7 +1,7 @@
 import subprocess
 
 
-def ns_lookup(ws: str, ipv6: bool = False) -> str:
+def ns_lookup(ws: str, ipv6: bool = False, repeat: int = 0) -> str:
     req = []
     req.append("nslookup")
     if ipv6:
@@ -9,23 +9,30 @@ def ns_lookup(ws: str, ipv6: bool = False) -> str:
 
     req.append(ws)
     req.append("208.67.222.222")
-
-    return subprocess.check_output(req,
-                                   timeout=2, stderr=subprocess.STDOUT, shell=True).decode("utf-8")
+    try:
+            return subprocess.check_output(req,
+                                           timeout=3, stderr=subprocess.STDOUT, shell=True).decode("utf-8")
+    except:
+        if repeat < 3:
+            return ns_lookup(ws=ws, ipv6=ipv6, repeat=repeat+1)
+        else:
+            return None
 
 
 def get_ipv4_info(ws: str) -> str:
     res = ns_lookup(ws)
-    addresses = get_addresses(res, ipv4=True)
+    if res:
+        return get_addresses(res, ipv4=True)
 
-    return addresses
+    return []
 
 
 def get_ipv6_info(ws: str) -> str:
     res = ns_lookup(ws, ipv6=True)
-    addresses = get_addresses(res, ipv6=True)
+    if res:
+        return get_addresses(res, ipv6=True)
 
-    return addresses
+    return []
 
 
 def get_addresses(lookup_res: str, ipv4: bool = False, ipv6: bool = False) -> list:

@@ -35,7 +35,7 @@ class HttpInfo:
 
         return http_server, insecure_http, redirect_to_https, hsts
 
-    def process_response(self, response: Response):
+    def process_response(self, response: Response) -> tuple:
         http_server = response.headers.get(key='Server')
         hsts_res = response.headers.get(key="Strict-Transport-Security")
 
@@ -46,7 +46,7 @@ class HttpInfo:
 
         return http_server, hsts
 
-    def get_https_info(self, http_server: str, hsts: bool):
+    def get_https_info(self, http_server: str, hsts: bool) -> tuple:
         response = None
         try:
             response = self.get_https()
@@ -72,11 +72,23 @@ class HttpInfo:
 
         return None
 
-    def get_http(self) -> Response:
-        return self.session.get('http://' + self.get_hostname(self.url))
+    def get_http(self, repeat: int = 0) -> Response:
+        try:
+            return self.session.get('http://' + self.get_hostname(self.url))
+        except:
+            if repeat < 3:
+                return self.get_http(repeat=repeat+1)
+            else:
+                return None
 
-    def get_https(self) -> Response:
-        return self.session.get('https://' + self.get_hostname(self.url))
+    def get_https(self, repeat: int = 0) -> Response:
+        try:
+            return self.session.get('https://' + self.get_hostname(self.url))
+        except:
+            if repeat < 3:
+                return self.get_http(repeat=repeat+1)
+            else:
+                return None
 
     @staticmethod
     def get_hostname(url: str) -> str:
