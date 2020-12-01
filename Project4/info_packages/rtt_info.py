@@ -38,7 +38,6 @@ class RTTInfo:
             return subprocess.run(req, timeout=3, shell=True, stderr=subprocess.STDOUT,
                                   stdout=subprocess.PIPE).stdout.decode("utf-8")
         except Exception as ex:
-            print(ex)
             if repeat < 3:
                 return self.get_rtt_message(ip=ip, repeat=repeat + 1)
             else:
