@@ -21,9 +21,6 @@ class HttpInfo:
             if response.url[:8] == 'https://':
                 redirect_to_https = True
 
-            if self.url == 'amazon.com':
-                print(response)
-
             http_server, hsts = self.process_response(response=response)
 
         except Exception as ex:
@@ -41,9 +38,6 @@ class HttpInfo:
     def process_response(self, response: Response) -> tuple:
         http_server = response.headers.get(key='Server')
         hsts_res = response.headers.get(key="Strict-Transport-Security")
-
-        if 'amazon' in self.url:
-            print("YOOO")
 
         if hsts_res is None:
             hsts = False
