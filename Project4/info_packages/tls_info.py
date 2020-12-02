@@ -1,3 +1,5 @@
+import os
+import signal
 import subprocess
 
 
@@ -61,9 +63,8 @@ class TLSInfo:
     def get_openssl(self, repeat: int = 0) -> str:
         try:
             req = "echo | openssl s_client -connect " + self.url + ":443"
-            print(req)
-            return subprocess.check_output(req,
-                                       timeout=2,  stderr=subprocess.STDOUT, shell=True).decode("utf-8")
+
+            return subprocess.check_output(req, shell=True, stderr=subprocess.STDOUT).decode("utf-8")
         except Exception as ex:
             print(ex)
             if repeat < 2:
