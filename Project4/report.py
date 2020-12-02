@@ -17,7 +17,7 @@ def main():
 
     df = pd.DataFrame(data).transpose()
 
-    # df.rtt_range = df.rtt_range.replace(np.nan, 0)
+    df['rtt_range'] = df['rtt_range'].apply(lambda d: d if isinstance(d, list) else [None, None])
 
     df[['rtt_min', 'rtt_max']] = df.rtt_range.to_list()
 
