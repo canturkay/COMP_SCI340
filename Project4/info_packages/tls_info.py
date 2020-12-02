@@ -63,6 +63,7 @@ class TLSInfo:
     def get_openssl(self, repeat: int = 0) -> str:
         try:
             req = "echo | openssl s_client -connect " + self.url + ":443"
+            print(req)
             return subprocess.check_output(req,
                                        timeout=3, shell=True).decode("utf-8")
         except:
