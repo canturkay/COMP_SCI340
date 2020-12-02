@@ -50,9 +50,11 @@ class TLSInfo:
     def get_nmap(self, repeat: int = 0) -> str:
         try:
             req = "nmap --script ssl-enum-ciphers -p 443 " + self.url
+            print(req)
             return subprocess.check_output(req,
                                        timeout=10, stderr=subprocess.STDOUT, shell=True).decode("utf-8")
-        except:
+        except Exception as ex:
+            print(ex)
             if repeat < 2:
                 return self.get_nmap(repeat=repeat+1)
             else:
