@@ -52,7 +52,7 @@ class TLSInfo:
             req = "nmap --script ssl-enum-ciphers -p 443 " + self.url
             print(req)
             return subprocess.check_output(req,
-                                       timeout=10, stderr=subprocess.STDOUT, shell=True).decode("utf-8")
+                                       timeout=10, shell=True).decode("utf-8")
         except Exception as ex:
             print(ex)
             if repeat < 2:
