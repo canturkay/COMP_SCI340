@@ -64,7 +64,7 @@ class TLSInfo:
 
     def get_openssl(self, repeat: int = 0) -> str:
         try:
-            req = "echo | openssl s_client -connect " + self.url + ":443"
+            req = "timeout 2 echo | openssl s_client -connect " + self.url + ":443"
             print(req)
 
             return subprocess.check_output(req, shell=True, input="", timeout=2, stderr=subprocess.STDOUT).decode("utf-8")
