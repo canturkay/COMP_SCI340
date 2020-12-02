@@ -28,34 +28,26 @@ def main():
 
         single_website["scan_time"] = time.time()
 
-        print(single_website)
-
         single_website["ipv4_addresses"], single_website["ipv6_addresses"] = get_ip_info(ws)
-        print(single_website)
 
         http_info = HttpInfo(ws=ws)
         single_website["http_server"], single_website["insecure_http"], \
             single_website["redirect_to_https"], single_website["hsts"] = http_info.get_info()
-        print(single_website)
 
         tls_info = TLSInfo(url=ws)
 
         single_website['tls_versions'], single_website['root_ca'] = tls_info.get_info()
-        print(single_website)
 
         dns_info = DNSInfo(ips=single_website["ipv4_addresses"])
 
         single_website['rdns_names'] = dns_info.get_info()
-        print(single_website)
 
         rtt_info = RTTInfo(ips=single_website["ipv4_addresses"])
 
         single_website['rtt_range'] = rtt_info.get_info()
-        print(single_website)
 
         single_website['geo_locations'] = geo_info.get_info(ips=single_website["ipv4_addresses"])
 
-        print(single_website)
         website_scans[ws] = single_website
 
     geo_info.reader.close()
@@ -64,8 +56,8 @@ def main():
 
 
 def write_to_file(content):
-    json_object = json.dumps(content, sort_keys=True, indent=4)
-    print(json_object)
+    # json_object = json.dumps(content, sort_keys=True, indent=4)
+    # print(json_object)
     file_name = sys.argv[2]
     with open(file_name, "w") as f:
         json.dump(content, f, sort_keys=True, indent=4)

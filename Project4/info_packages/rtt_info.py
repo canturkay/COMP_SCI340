@@ -34,7 +34,7 @@ class RTTInfo:
 
     def get_rtt_message(self, ip: str, repeat: int = 0, port: str = '443'):
         try:
-            req = 'sh -c "time echo -e \'\\x1dclose\\x0d\' | timeout 2 telnet ' + ip + ' ' + port + '"'
+            req = 'sh -c "time echo -e \'\\x1dclose\\x0d\' | telnet ' + ip + ' ' + port + '"'
             return subprocess.check_output(req, timeout=2,
                                   stderr=subprocess.STDOUT, shell=True).decode("utf-8")
         except subprocess.CalledProcessError as e:
