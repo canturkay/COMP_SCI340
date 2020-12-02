@@ -40,7 +40,7 @@ class RTTInfo:
         except subprocess.CalledProcessError as e:
             return e.output.decode("utf-8")
         except Exception as ex:
-            if repeat < 2:
+            if repeat < 1:
                 return self.get_rtt_message(ip=ip, repeat=repeat + 1)
             else:
                 return None

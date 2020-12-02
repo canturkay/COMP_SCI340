@@ -76,7 +76,7 @@ class HttpInfo:
         try:
             return self.session.get('http://' + self.get_hostname(self.url), timeout=2)
         except:
-            if repeat < 2:
+            if repeat < 1:
                 return self.get_http(repeat=repeat+1)
             else:
                 return None
@@ -85,7 +85,7 @@ class HttpInfo:
         try:
             return self.session.get('https://' + self.get_hostname(self.url), timeout=2)
         except:
-            if repeat < 2:
+            if repeat < 1:
                 return self.get_https(repeat=repeat+1)
             else:
                 return None

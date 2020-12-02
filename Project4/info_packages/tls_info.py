@@ -57,7 +57,7 @@ class TLSInfo:
                                        timeout=10, stderr=subprocess.STDOUT, shell=True).decode("utf-8")
         except Exception as ex:
             print(ex)
-            if repeat < 2:
+            if repeat < 1:
                 return self.get_nmap(repeat=repeat+1)
             else:
                 return ""
@@ -70,7 +70,7 @@ class TLSInfo:
             return subprocess.check_output(req, shell=True, input="", timeout=2, stderr=subprocess.STDOUT).decode("utf-8")
         except Exception as ex:
             print(ex)
-            if repeat < 2:
+            if repeat < 1:
                 return self.get_openssl(repeat=repeat+1)
             else:
                 return ""
