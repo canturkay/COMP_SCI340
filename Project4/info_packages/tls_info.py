@@ -64,7 +64,8 @@ class TLSInfo:
             print(req)
             return subprocess.check_output(req,
                                        timeout=2,  stderr=subprocess.STDOUT).decode("utf-8")
-        except:
+        except Exception as ex:
+            print(ex)
             if repeat < 2:
                 return self.get_openssl(repeat=repeat+1)
             else:
